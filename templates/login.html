@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Login - LeaveSystem{% endblock %}
+
+{% block content %}
+<div class="login-page">
+    <div class="login-card">
+        <div class="login-header">
+            <i class="fas fa-university logo-icon" style="font-size: 3rem; margin-bottom: 1rem; color: var(--primary);"></i>
+            <h2>Welcome Back</h2>
+            <p>Please enter your credentials to continue</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}" style="margin-bottom: 1.5rem; font-size: 0.875rem;">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('login') }}" method="POST">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <div style="position: relative;">
+                    <i class="fas fa-user" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                    <input type="text" name="username" id="username" class="form-control" placeholder="Enter username" style="padding-left: 2.75rem;" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div style="position: relative;">
+                    <i class="fas fa-lock" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                    <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" style="padding-left: 2.75rem;" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem; font-size: 1rem; padding: 0.875rem;">
+                Sign In <i class="fas fa-arrow-right"></i>
+            </button>
+        </form>
+
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: center;">
+            <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.6;">
+                <strong>Admin:</strong> admin / admin123<br>
+                <strong>Teacher:</strong> Name / Dept<br>
+                <strong>Student:</strong> Roll No / DOB
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Override main-content and top-header for login page */
+    .main-content {
+        padding: 0 !important;
+        background: transparent !important;
+    }
+    .top-header {
+        display: none !important;
+    }
+    .content-body {
+        padding: 0 !important;
+    }
+</style>
+{% endblock %}

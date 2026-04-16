@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Student Leaves - LeaveSystem{% endblock %}
+{% block page_title %}Student Leave Requests{% endblock %}
+
+{% block content %}
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Roll Number</th>
+                <th>Dates</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for leave in leaves %}
+            <tr>
+                <td style="font-weight: 600;">{{ leave.user.name }}</td>
+                <td><code style="background: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 4px;">{{ leave.user.roll_no }}</code></td>
+                <td>{{ leave.dates }}</td>
+                <td style="max-width: 300px;">{{ leave.reason }}</td>
+                <td>
+                    <span class="badge badge-{{ leave.status.lower() }}">
+                        {{ leave.status }}
+                    </span>
+                </td>
+                <td>
+                    {% if leave.status == 'Pending' %}
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a href="{{ url_for('update_leave', leave_id=leave.id, status='Approved') }}" class="btn btn-success" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+                            <i class="fas fa-check"></i> Approve
+                        </a>
+                        <a href="{{ url_for('update_leave', leave_id=leave.id, status='Rejected') }}" class="btn btn-danger" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+                            <i class="fas fa-times"></i> Reject
+                        </a>
+                    </div>
+                    {% else %}
+                    <span style="color: var(--text-muted); font-size: 0.75rem;">Processed</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    No student leave requests found.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

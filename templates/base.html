@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Leave System{% endblock %}</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        {% if session.get('user_id') %}
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-university logo-icon"></i>
+                <span class="logo-text">LeaveSystem</span>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.path == url_for('dashboard') %}active{% endif %}">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                {% if session.get('role') == 'Admin' %}
+                <a href="{{ url_for('manage_teachers') }}" class="nav-item {% if request.path == url_for('manage_teachers') %}active{% endif %}">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    <span>Teachers</span>
+                </a>
+                <a href="{{ url_for('manage_students') }}" class="nav-item {% if request.path == url_for('manage_students') %}active{% endif %}">
+                    <i class="fas fa-user-graduate"></i>
+                    <span>Students</span>
+                </a>
+                <a href="{{ url_for('view_all_leaves') }}" class="nav-item {% if request.path == url_for('view_all_leaves') %}active{% endif %}">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Teacher Leaves</span>
+                </a>
+                {% endif %}
+
+                {% if session.get('role') == 'Teacher' %}
+                <a href="{{ url_for('teacher_student_leaves') }}" class="nav-item {% if request.path == url_for('teacher_student_leaves') %}active{% endif %}">
+                    <i class="fas fa-tasks"></i>
+                    <span>Student Requests</span>
+                </a>
+                <a href="{{ url_for('apply_leave') }}" class="nav-item {% if request.path == url_for('apply_leave') %}active{% endif %}">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Apply Leave</span>
+                </a>
+                {% endif %}
+
+                {% if session.get('role') == 'Student' %}
+                <a href="{{ url_for('apply_leave') }}" class="nav-item {% if request.path == url_for('apply_leave') %}active{% endif %}">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Apply Leave</span>
+                </a>
+                {% endif %}
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        {{ session.get('name', 'U')[0] | upper }}
+                    </div>
+                    <div class="user-details">
+                        <p class="user-name">{{ session.get('name') }}</p>
+                        <p class="user-role">{{ session.get('role') }}</p>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+        {% endif %}
+
+        <!-- Main Content -->
+        <main class="main-content {% if not session.get('user_id') %}full-width{% endif %}">
+            <header class="top-header">
+                <h1>{% block page_title %}{% endblock %}</h1>
+                <div class="header-actions">
+                    <!-- Notifications or Search could go here -->
+                </div>
+            </header>
+
+            <div class="content-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    {% for category, message in messages %}
+                      <div class="alert alert-{{ category }}">
+                        {{ message }}
+                      </div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

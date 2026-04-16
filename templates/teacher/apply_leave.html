@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Apply for Leave - LeaveSystem{% endblock %}
+{% block page_title %}Apply for Leave (Teacher Roll){% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <form action="{{ url_for('apply_leave') }}" method="POST">
+        <div class="form-group">
+            <label for="dates">Leave Dates</label>
+            <input type="text" name="dates" id="dates" class="form-control" placeholder="e.g. 2024-05-01 to 2024-05-03" required>
+        </div>
+        <div class="form-group">
+            <label for="reason">Reason for Leave</label>
+            <textarea name="reason" id="reason" class="form-control" rows="5" placeholder="Explain your reason clearly..." required></textarea>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane"></i> Submit Request
+            </button>
+            <a href="{{ url_for('dashboard') }}" class="btn" style="background: #e2e8f0; color: var(--text-main);">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

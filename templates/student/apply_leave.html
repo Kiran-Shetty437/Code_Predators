@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Apply for Leave - LeaveSystem{% endblock %}
+{% block page_title %}Submit Leave Request{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div style="background: #eff6ff; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border-left: 4px solid var(--primary);">
+        <p style="font-size: 0.875rem; color: #1e40af;">
+            <i class="fas fa-info-circle"></i> Your request will be sent to your department teachers for approval.
+        </p>
+    </div>
+
+    <form action="{{ url_for('apply_leave') }}" method="POST">
+        <div class="form-group">
+            <label for="dates">Leave Dates</label>
+            <input type="text" name="dates" id="dates" class="form-control" placeholder="e.g. May 10th - May 12th" required>
+        </div>
+        <div class="form-group">
+            <label for="reason">Reason for Leave</label>
+            <textarea name="reason" id="reason" class="form-control" rows="5" placeholder="Specify why you need leave..." required></textarea>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane"></i> Send Request
+            </button>
+            <a href="{{ url_for('dashboard') }}" class="btn" style="background: #e2e8f0; color: var(--text-main);">Discard</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

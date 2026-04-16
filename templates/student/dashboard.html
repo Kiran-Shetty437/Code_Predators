@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard - LeaveSystem{% endblock %}
+{% block page_title %}Student Portal{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon purple">
+            <i class="fas fa-file-signature"></i>
+        </div>
+        <div class="stat-info">
+            <h3>My Leave Status</h3>
+            {% if my_leaves %}
+                <p style="font-size: 1rem; color: var(--primary);">{{ my_leaves[-1].status }}</p>
+            {% else %}
+                <p style="font-size: 1rem; color: var(--text-muted);">No requests</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card-section" style="background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.25rem;">My Leave History</h2>
+        <a href="{{ url_for('apply_leave') }}" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem;">
+            <i class="fas fa-plus"></i> New Request
+        </a>
+    </div>
+    
+    <div class="table-container" style="box-shadow: none;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Requested On</th>
+                    <th>Dates</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for leave in my_leaves[::-1] %}
+                <tr>
+                    <td>{{ leave.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td style="font-weight: 500;">{{ leave.dates }}</td>
+                    <td style="max-width: 250px;">{{ leave.reason }}</td>
+                    <td><span class="badge badge-{{ leave.status.lower() }}">{{ leave.status }}</span></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">You haven't applied for any leaves yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

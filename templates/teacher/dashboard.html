@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Dashboard - LeaveSystem{% endblock %}
+{% block page_title %}Teacher Dashboard{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon orange">
+            <i class="fas fa-user-clock"></i>
+        </div>
+        <div class="stat-info">
+            <h3>Pending Student Requests</h3>
+            <p>{{ pending_student_leaves }}</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon purple">
+            <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="stat-info">
+            <h3>My Leave Status</h3>
+            {% if my_leaves %}
+                <p style="font-size: 1rem; color: var(--primary);">{{ my_leaves[-1].status }}</p>
+            {% else %}
+                <p style="font-size: 1rem; color: var(--text-muted);">No requests</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card-section" style="background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+    <h2 style="margin-bottom: 1.5rem; font-size: 1.25rem;">My Recent Leave Requests</h2>
+    <div class="table-container" style="box-shadow: none;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Dates</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for leave in my_leaves[::-1] %}
+                <tr>
+                    <td>{{ leave.dates }}</td>
+                    <td>{{ leave.reason }}</td>
+                    <td><span class="badge badge-{{ leave.status.lower() }}">{{ leave.status }}</span></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="text-align: center; color: var(--text-muted);">You haven't applied for any leaves yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div style="margin-top: 1.5rem;">
+        <a href="{{ url_for('apply_leave') }}" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i> Apply New Leave
+        </a>
+    </div>
+</div>
+{% endblock %}
