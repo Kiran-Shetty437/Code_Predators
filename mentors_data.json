@@ -1,0 +1,47 @@
+[
+    {
+        "class_name": "IBCA",
+        "mentor1": "Ananya Kulkarni",
+        "mentor2": "Manish Bose"
+    },
+    {
+        "class_name": "IIBCA",
+        "mentor1": "Rohan Bose",
+        "mentor2": "Neha Das"
+    },
+    {
+        "class_name": "IIIBCA",
+        "mentor1": "Riya Joshi",
+        "mentor2": "Abhishek Joshi"
+    },
+    {
+        "class_name": "IBBA",
+        "mentor1": "Varun Sharma",
+        "mentor2": "Priya Prasad"
+    },
+    {
+        "class_name": "IIBBA",
+        "mentor1": "Vijay Nair",
+        "mentor2": "Vijay Iyer"
+    },
+    {
+        "class_name": "IIIBBA",
+        "mentor1": "Meera Nair",
+        "mentor2": "Rajesh Iyer"
+    },
+    {
+        "class_name": "IBCOM",
+        "mentor1": "Kavya Verma",
+        "mentor2": "Siddharth Yadav"
+    },
+    {
+        "class_name": "IIBCOM",
+        "mentor1": "Akash Gupta",
+        "mentor2": "Sunita Yadav"
+    },
+    {
+        "class_name": "IIIBCOM",
+        "mentor1": "Meera Deshmukh",
+        "mentor2": "Sanya Joshi"
+    }
+]

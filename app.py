@@ -1,12 +1,72 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
+from flask_mail import Mail, Message
 from datetime import datetime
+from werkzeug.utils import secure_filename
+import threading
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI', 'sqlite:///database_v2.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB limit
+
+# Email Configuration
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True') == 'True'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
+
+mail = Mail(app)
+
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def send_approval_email(target_email, name, role, dates):
+    try:
+        msg = Message("Leave Request Approved",
+                      recipients=[target_email])
+        msg.body = f"Hello {name},\n\nYour leave request for {dates} as a {role} has been APPROVED.\n\nBest regards,\nCollege Leave Management System"
+        
+        # Send in a background thread to avoid slowing down the UI
+        thread = threading.Thread(target=lambda: mail.send(msg))
+        thread.start()
+        print(f"Approval email sent to {target_email}")
+    except Exception as e:
+        print(f"Error sending email: {e}")
+
+def is_absent_today(date_str):
+    """
+    Checks if today's date falls within the provided date_str.
+    Expects formats like 'YYYY-MM-DD' or 'YYYY-MM-DD to YYYY-MM-DD'
+    """
+    from datetime import date
+    today = date.today()
+    
+    try:
+        if 'to' in date_str.lower():
+            start_str, end_str = date_str.lower().split('to')
+            start_date = datetime.strptime(start_str.strip(), '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_str.strip(), '%Y-%m-%d').date()
+            return start_date <= today <= end_date
+        else:
+            single_date = datetime.strptime(date_str.strip(), '%Y-%m-%d').date()
+            return single_date == today
+    except:
+        # Fallback: simple string inclusion check if format is non-standard
+        today_str = today.strftime('%Y-%m-%d')
+        return today_str in date_str
 
 db = SQLAlchemy(app)
 
@@ -17,7 +77,9 @@ class User(db.Model):
     role = db.Column(db.String(20), nullable=False) # Admin, Teacher, Student
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
-    department = db.Column(db.String(100))
+    department = db.Column(db.String(100)) # Dept for Teacher, Class for Student
+    email = db.Column(db.String(120))
+    phone = db.Column(db.String(20))
     dob = db.Column(db.String(20))
     roll_no = db.Column(db.String(50))
 
@@ -27,6 +89,7 @@ class LeaveRequest(db.Model):
     role = db.Column(db.String(20), nullable=False)
     reason = db.Column(db.Text, nullable=False)
     dates = db.Column(db.String(100), nullable=False)
+    document_path = db.Column(db.String(200)) # Path to uploaded file
     status = db.Column(db.String(20), default='Pending') # Pending, Approved, Rejected
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -42,6 +105,38 @@ with app.app_context():
         admin = User(name='Administrator', role='Admin', username='admin', password='admin123')
         db.session.add(admin)
         db.session.commit()
+    
+    # Always sync users from JSON on startup to keep data fresh
+    import json
+    json_path = os.path.join(app.root_path, 'users_data.json')
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, 'r') as f:
+                data = json.load(f)
+            
+            # Clear existing non-admin users to remove "fake" or old data
+            # This ensures the database EXACTLY matches the JSON file
+            User.query.filter(User.role != 'Admin').delete()
+            
+            for user_data in data:
+                new_user = User(
+                    name=user_data['name'],
+                    role=user_data['role'],
+                    username=user_data['username'],
+                    password=user_data['password'],
+                    department=user_data['department'],
+                    email=user_data.get('email'),
+                    phone=user_data.get('phone'),
+                    dob=user_data.get('dob'),
+                    roll_no=user_data.get('roll_no')
+                )
+                db.session.add(new_user)
+            
+            db.session.commit()
+            print("Successfully synchronized users from JSON (Clean Sync).")
+        except Exception as e:
+            print(f"Error syncing JSON: {e}")
+            db.session.rollback()
 
 # Routes
 @app.route('/')
@@ -105,63 +200,46 @@ def manage_teachers():
     teachers = User.query.filter_by(role='Teacher').all()
     return render_template('admin/teachers.html', teachers=teachers)
 
-@app.route('/admin/add_teacher', methods=['POST'])
-def add_teacher():
-    if session.get('role') != 'Admin': return redirect(url_for('login'))
-    name = request.form.get('name')
-    dept = request.form.get('department')
-    
-    if not name or not dept:
-        flash('All fields are required!', 'warning')
-        return redirect(url_for('manage_teachers'))
-        
-    # Check if username exists
-    existing = User.query.filter_by(username=name).first()
-    if existing:
-        flash('Teacher name must be unique!', 'danger')
-        return redirect(url_for('manage_teachers'))
-
-    new_teacher = User(name=name, role='Teacher', username=name, password=dept, department=dept)
-    db.session.add(new_teacher)
-    db.session.commit()
-    flash('Teacher added successfully!', 'success')
-    return redirect(url_for('manage_teachers'))
-
 @app.route('/admin/students')
 def manage_students():
     if session.get('role') != 'Admin': return redirect(url_for('login'))
     students = User.query.filter_by(role='Student').all()
     return render_template('admin/students.html', students=students)
 
-@app.route('/admin/add_student', methods=['POST'])
-def add_student():
-    if session.get('role') != 'Admin': return redirect(url_for('login'))
-    name = request.form.get('name')
-    roll_no = request.form.get('roll_no')
-    dob = request.form.get('dob')
-    
-    if not name or not roll_no or not dob:
-        flash('All fields are required!', 'warning')
-        return redirect(url_for('manage_students'))
-
-    # Check if username exists
-    existing = User.query.filter_by(username=roll_no).first()
-    if existing:
-        flash('Roll number must be unique!', 'danger')
-        return redirect(url_for('manage_students'))
-
-    new_student = User(name=name, role='Student', username=roll_no, password=dob, roll_no=roll_no, dob=dob)
-    db.session.add(new_student)
-    db.session.commit()
-    flash('Student added successfully!', 'success')
-    return redirect(url_for('manage_students'))
-
 @app.route('/admin/leaves')
 def view_all_leaves():
     if session.get('role') != 'Admin': return redirect(url_for('login'))
-    # Admin views all leaves
-    leaves = LeaveRequest.query.all()
+    # Admin views: 1. All Teacher leaves, 2. Student leaves forwarded to Admin
+    leaves = LeaveRequest.query.filter(
+        (LeaveRequest.role == 'Teacher') | 
+        (LeaveRequest.status == 'Forwarded to Admin')
+    ).all()
     return render_template('admin/leaves.html', leaves=leaves)
+
+@app.route('/admin/absentees')
+def view_absentees():
+    if session.get('role') != 'Admin': return redirect(url_for('login'))
+    
+    # Get all approved leaves
+    approved_leaves = LeaveRequest.query.filter_by(status='Approved').all()
+    
+    absent_teachers = {}
+    absent_students = {}
+    
+    for leave in approved_leaves:
+        if is_absent_today(leave.dates):
+            if leave.role == 'Teacher':
+                dept = leave.user.department
+                if dept not in absent_teachers: absent_teachers[dept] = []
+                absent_teachers[dept].append(leave.user)
+            else:
+                cls = leave.user.department # department field stores Class for students
+                if cls not in absent_students: absent_students[cls] = []
+                absent_students[cls].append(leave.user)
+                
+    return render_template('admin/absentees.html', 
+                            absent_teachers=absent_teachers, 
+                            absent_students=absent_students)
 
 @app.route('/admin/delete_user/<int:user_id>')
 def delete_user(user_id):
@@ -177,8 +255,34 @@ def delete_user(user_id):
 @app.route('/teacher/student_leaves')
 def teacher_student_leaves():
     if session.get('role') != 'Teacher': return redirect(url_for('login'))
-    leaves = LeaveRequest.query.filter_by(role='Student').all()
-    return render_template('teacher/student_leaves.html', leaves=leaves)
+    
+    current_teacher_name = session.get('name')
+    
+    # Load mentors data to find which class this teacher mentors
+    import json
+    mentors_path = os.path.join(app.root_path, 'mentors_data.json')
+    mentored_classes = []
+    
+    if os.path.exists(mentors_path):
+        try:
+            with open(mentors_path, 'r') as f:
+                mentors_data = json.load(f)
+            for item in mentors_data:
+                if item['mentor1'] == current_teacher_name or item['mentor2'] == current_teacher_name:
+                    mentored_classes.append(item['class_name'])
+        except Exception as e:
+            print(f"Error reading mentors: {e}")
+
+    # If the teacher is not a mentor for any class, they see no student leaves
+    if not mentored_classes:
+        return render_template('teacher/student_leaves.html', leaves=[], mentored_classes=[])
+
+    # Filter leaves: Student requests where student department is in mentored_classes
+    leaves = LeaveRequest.query.join(User, LeaveRequest.user_id == User.id)\
+                               .filter(User.role == 'Student')\
+                               .filter(User.department.in_(mentored_classes)).all()
+                               
+    return render_template('teacher/student_leaves.html', leaves=leaves, mentored_classes=mentored_classes)
 
 # General Routes
 @app.route('/apply_leave', methods=['GET', 'POST'])
@@ -187,8 +291,38 @@ def apply_leave():
     if request.method == 'POST':
         reason = request.form.get('reason')
         dates = request.form.get('dates')
+        file = request.files.get('document')
         
-        new_leave = LeaveRequest(user_id=session['user_id'], role=session['role'], reason=reason, dates=dates)
+        # Date Validation: Prevent past dates
+        from datetime import date
+        today = date.today()
+        try:
+            # Check the first date in the string
+            if 'to' in dates.lower():
+                start_str = dates.lower().split('to')[0].strip()
+            else:
+                start_str = dates.strip()
+            
+            requested_start = datetime.strptime(start_str, '%Y-%m-%d').date()
+            if requested_start < today:
+                flash(f'Cannot apply for past dates! Today is {today}.', 'warning')
+                return redirect(request.referrer)
+        except Exception as e:
+            # If parsing fails, we allow it but log it (for flexibile formats like "Next Monday")
+            print(f"Date validation skipped: {e}")
+        
+        filename = None
+        if file and allowed_file(file.filename):
+            filename = secure_filename(f"{session['user_id']}_{datetime.now().timestamp()}_{file.filename}")
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        
+        new_leave = LeaveRequest(
+            user_id=session['user_id'], 
+            role=session['role'], 
+            reason=reason, 
+            dates=dates, 
+            document_path=filename
+        )
         db.session.add(new_leave)
         db.session.commit()
         flash('Leave request submitted!', 'success')
@@ -206,8 +340,16 @@ def update_leave(leave_id, status):
     if not leave: return redirect(url_for('dashboard'))
     
     current_role = session.get('role')
-    if current_role == 'Admin' and leave.role == 'Teacher':
-        leave.status = status
+    
+    # Admin can approve/reject Teacher leaves OR Student leaves forwarded to them
+    if current_role == 'Admin':
+        if leave.role == 'Teacher' or leave.status == 'Forwarded to Admin':
+            leave.status = status
+        else:
+            flash('Unauthorized for this request', 'danger')
+            return redirect(url_for('dashboard'))
+            
+    # Teacher (Mentor) can approve/reject/forward Student leaves
     elif current_role == 'Teacher' and leave.role == 'Student':
         leave.status = status
     else:
@@ -215,7 +357,12 @@ def update_leave(leave_id, status):
         return redirect(url_for('dashboard'))
         
     db.session.commit()
-    flash(f'Leave {status} successfully!', 'info')
+    
+    # Send Email Notification if Approved
+    if status == 'Approved' and leave.user.email:
+        send_approval_email(leave.user.email, leave.user.name, leave.role, leave.dates)
+        
+    flash(f'Leave updated to {status} successfully!', 'info')
     return redirect(request.referrer)
 
 if __name__ == '__main__':

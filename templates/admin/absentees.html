@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Today's Absentees - LeaveSystem{% endblock %}
+{% block page_title %}Today's Absentees{% endblock %}
+
+{% block content %}
+<div style="background: var(--white); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; border-left: 4px solid var(--warning);">
+    <p style="font-size: 0.875rem; color: var(--text-muted);">
+        <i class="fas fa-calendar-day"></i> Listing all members with <strong>Approved</strong> leave for today.
+    </p>
+</div>
+
+<div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+    <!-- Teachers List -->
+    <div class="card-section">
+        <h2 style="margin-bottom: 1.5rem; font-size: 1.25rem;"><i class="fas fa-chalkboard-teacher"></i> Absent Teachers</h2>
+        {% for dept, teachers in absent_teachers.items() %}
+            <div style="margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.25rem;">
+                    {{ dept }}
+                </h3>
+                <ul style="list-style: none; padding-left: 0;">
+                    {% for teacher in teachers %}
+                    <li style="padding: 0.5rem; background: #fff; border-radius: 0.25rem; margin-bottom: 0.25rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; justify-content: space-between;">
+                        <span>{{ teacher.name }}</span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">{{ teacher.email }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% else %}
+            <p style="text-align: center; color: var(--text-muted); padding: 2rem;">No teachers are absent today.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Students List -->
+    <div class="card-section">
+        <h2 style="margin-bottom: 1.5rem; font-size: 1.25rem;"><i class="fas fa-user-graduate"></i> Absent Students</h2>
+        {% for cls, students in absent_students.items() %}
+            <div style="margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1rem; color: var(--secondary); margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.25rem;">
+                    {{ cls }}
+                </h3>
+                <ul style="list-style: none; padding-left: 0;">
+                    {% for student in students %}
+                    <li style="padding: 0.5rem; background: #fff; border-radius: 0.25rem; margin-bottom: 0.25rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; justify-content: space-between;">
+                        <span>{{ student.name }}</span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">{{ student.roll_no }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% else %}
+            <p style="text-align: center; color: var(--text-muted); padding: 2rem;">No students are absent today.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -36,16 +36,16 @@
 
 <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
     <div class="card-section">
-        <h2 style="margin-bottom: 1.5rem; font-size: 1.25rem;">Quick Actions</h2>
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <h2 style="margin-bottom: 1.5rem; font-size: 1.25rem;">Quick Navigation</h2>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
             <a href="{{ url_for('manage_teachers') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add Teacher
+                <i class="fas fa-chalkboard-teacher"></i> Teachers List
             </a>
             <a href="{{ url_for('manage_students') }}" class="btn btn-primary" style="background: var(--secondary);">
-                <i class="fas fa-plus"></i> Add Student
+                <i class="fas fa-user-graduate"></i> Students List
             </a>
             <a href="{{ url_for('view_all_leaves') }}" class="btn btn-success">
-                <i class="fas fa-check-circle"></i> Review Leaves
+                <i class="fas fa-check-circle"></i> Review All Leaves
             </a>
         </div>
     </div>

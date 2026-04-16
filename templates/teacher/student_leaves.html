@@ -12,6 +12,7 @@
                 <th>Roll Number</th>
                 <th>Dates</th>
                 <th>Reason</th>
+                <th>Doc</th>
                 <th>Status</th>
                 <th>Actions</th>
             </tr>
@@ -24,20 +25,34 @@
                 <td>{{ leave.dates }}</td>
                 <td style="max-width: 300px;">{{ leave.reason }}</td>
                 <td>
-                    <span class="badge badge-{{ leave.status.lower() }}">
+                    {% if leave.document_path %}
+                    <a href="{{ url_for('static', filename='uploads/' + leave.document_path) }}" target="_blank" class="btn" style="padding: 0.2rem 0.4rem; background: #f1f5f9; color: var(--primary);">
+                        <i class="fas fa-file-alt"></i> View
+                    </a>
+                    {% else %}
+                    <span style="color: #cbd5e1; font-size: 0.75rem;">None</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="badge {% if 'Forwarded' in leave.status %}badge-forwarded{% else %}badge-{{ leave.status.lower() }}{% endif %}">
                         {{ leave.status }}
                     </span>
                 </td>
                 <td>
                     {% if leave.status == 'Pending' %}
-                    <div style="display: flex; gap: 0.5rem;">
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                         <a href="{{ url_for('update_leave', leave_id=leave.id, status='Approved') }}" class="btn btn-success" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
                             <i class="fas fa-check"></i> Approve
                         </a>
                         <a href="{{ url_for('update_leave', leave_id=leave.id, status='Rejected') }}" class="btn btn-danger" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
                             <i class="fas fa-times"></i> Reject
                         </a>
+                        <a href="{{ url_for('update_leave', leave_id=leave.id, status='Forwarded to Admin') }}" class="btn" style="padding: 0.4rem 0.6rem; font-size: 0.75rem; background: var(--secondary); color: white;">
+                            <i class="fas fa-share"></i> Forward to Admin
+                        </a>
                     </div>
+                    {% elif leave.status == 'Forwarded to Admin' %}
+                    <span style="color: var(--primary); font-size: 0.75rem; font-weight: 600;">Awaiting Admin Action</span>
                     {% else %}
                     <span style="color: var(--text-muted); font-size: 0.75rem;">Processed</span>
                     {% endif %}

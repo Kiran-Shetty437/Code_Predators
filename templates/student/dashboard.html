@@ -35,6 +35,7 @@
                     <th>Requested On</th>
                     <th>Dates</th>
                     <th>Reason</th>
+                    <th>Doc</th>
                     <th>Status</th>
                 </tr>
             </thead>
@@ -44,6 +45,15 @@
                     <td>{{ leave.created_at.strftime('%Y-%m-%d') }}</td>
                     <td style="font-weight: 500;">{{ leave.dates }}</td>
                     <td style="max-width: 250px;">{{ leave.reason }}</td>
+                    <td>
+                        {% if leave.document_path %}
+                        <a href="{{ url_for('static', filename='uploads/' + leave.document_path) }}" target="_blank" style="color: var(--primary);">
+                            <i class="fas fa-file-pdf"></i> View
+                        </a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
                     <td><span class="badge badge-{{ leave.status.lower() }}">{{ leave.status }}</span></td>
                 </tr>
                 {% else %}
