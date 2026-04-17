@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Timetable - LeaveSystem{% endblock %}
+{% block page_title %}Timetable Management{% endblock %}
+
+{% block content %}
+<div class="timetable-container">
+    <table class="timetable">
+        <thead>
+            <tr>
+                <th>Day / Period</th>
+                {% for p in periods %}
+                    {% if p == 5 %}
+                        <th class="lunch-header" style="min-width: 40px;">Lunch</th>
+                    {% endif %}
+                    <th>Period {{ p }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for day in days %}
+            <tr>
+                <td class="day-cell">{{ day }}</td>
+                {% for p in periods %}
+                    {% if p == 5 %}
+                        <td rowspan="1" class="lunch-break">BREAK</td>
+                    {% endif %}
+                    <td onclick="openEditModal('{{ day }}', {{ p }}, '{{ timetable_data.get(day, {}).get(p, '') }}')">
+                        <div class="timetable-cell editable">
+                            {% if timetable_data.get(day, {}).get(p) %}
+                                <span class="subject-name">{{ timetable_data[day][p] }}</span>
+                                <span class="class-name" id="class-{{ day }}-{{ p }}">Loading...</span>
+                            {% else %}
+                                <span class="empty-text">---</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Edit Period</h3>
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="subjectSelect">Select Subject</label>
+                <select id="subjectSelect" class="form-control">
+                    <option value="">-- Clear Slot --</option>
+                    {% for subject in all_subjects %}
+                    <option value="{{ subject }}">{{ subject }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div id="modalError" class="alert alert-danger" style="display: none; padding: 0.75rem; font-size: 0.8rem; margin-top: 1rem;"></div>
+        </div>
+        <div class="timetable-actions">
+            <button class="btn btn-primary" onclick="saveCell()">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentDay = '';
+let currentPeriod = 0;
+
+// Pass mapping from Jinja to JS
+const classMapping = {{ class_mapping | tojson }};
+
+function getClassFromSubject(subject) {
+    for (const [className, subjects] of Object.entries(classMapping)) {
+        if (subjects.includes(subject)) return className;
+    }
+    return '';
+}
+
+function openEditModal(day, period, subject) {
+    currentDay = day;
+    currentPeriod = period;
+    document.getElementById('modalTitle').innerText = `Edit: ${day} - Period ${period}`;
+    document.getElementById('subjectSelect').value = subject;
+    document.getElementById('editModal').style.display = 'block';
+    document.getElementById('modalError').style.display = 'none';
+}
+
+function closeModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+async function saveCell() {
+    const subject = document.getElementById('subjectSelect').value;
+    const errorDiv = document.getElementById('modalError');
+    errorDiv.style.display = 'none';
+
+    try {
+        const response = await fetch('/api/save_timetable', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                day: currentDay,
+                period: currentPeriod,
+                subject: subject
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            window.location.reload(); 
+        } else {
+            errorDiv.innerText = result.message;
+            errorDiv.style.display = 'block';
+        }
+    } catch (e) {
+        errorDiv.innerText = "An error occurred while saving.";
+        errorDiv.style.display = 'block';
+    }
+}
+
+// Close modal if clicked outside
+window.onclick = function(event) {
+    if (event.target == document.getElementById('editModal')) {
+        closeModal();
+    }
+}
+
+// Initialize class names for existing subjects
+document.addEventListener('DOMContentLoaded', () => {
+    {% for day in days %}
+        {% for p in periods %}
+            {% if timetable_data.get(day, {}).get(p) %}
+                (function() {
+                    const el = document.getElementById('class-{{ day }}-{{ p }}');
+                    if (el) el.innerText = getClassFromSubject("{{ timetable_data[day][p] }}");
+                })();
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+});
+</script>
+{% endblock %}

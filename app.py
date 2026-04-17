@@ -96,6 +96,15 @@ class LeaveRequest(db.Model):
     # Relationship to user
     user = db.relationship('User', backref=db.backref('leaves', lazy=True))
 
+class TeacherTimetable(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    day = db.Column(db.String(20), nullable=False) # Monday, Tuesday, etc.
+    period = db.Column(db.Integer, nullable=False) # 1, 2, 3, etc.
+    subject = db.Column(db.String(100), nullable=False)
+    
+    teacher = db.relationship('User', backref=db.backref('timetable', lazy=True))
+
 # Create Database and Admin
 with app.app_context():
     db.create_all()
@@ -364,6 +373,139 @@ def update_leave(leave_id, status):
         
     flash(f'Leave updated to {status} successfully!', 'info')
     return redirect(request.referrer)
+
+# Timetable Management Routes
+def get_class_subject_mapping():
+    json_path = os.path.join(app.root_path, 'class_subjects.json')
+    if os.path.exists(json_path):
+        with open(json_path, 'r') as f:
+            return json.load(f)
+    return {}
+
+def get_class_from_subject(subject_name):
+    mapping = get_class_subject_mapping()
+    for class_name, subjects in mapping.items():
+        if subject_name in subjects:
+            return class_name
+    return None
+
+@app.route('/teacher/timetable')
+def teacher_timetable():
+    if session.get('role') != 'Teacher': return redirect(url_for('login'))
+    
+    teacher_id = session.get('user_id')
+    timetable_records = TeacherTimetable.query.filter_by(teacher_id=teacher_id).all()
+    
+    # Organize into a dict for easy access: {day: {period: subject}}
+    timetable_data = {}
+    for record in timetable_records:
+        if record.day not in timetable_data: timetable_data[record.day] = {}
+        timetable_data[record.day][record.period] = record.subject
+        
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    periods = range(1, 8) # 7 periods
+    
+    mapping = get_class_subject_mapping()
+    all_subjects = []
+    for subjects in mapping.values():
+        all_subjects.extend(subjects)
+    all_subjects = sorted(list(set(all_subjects)))
+    
+    return render_template('teacher/timetable.html', 
+                           timetable_data=timetable_data, 
+                           days=days, 
+                           periods=periods,
+                           all_subjects=all_subjects,
+                           class_mapping=mapping)
+
+@app.route('/api/save_timetable', methods=['POST'])
+def save_timetable():
+    if session.get('role') != 'Teacher': return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    data = request.json
+    teacher_id = session.get('user_id')
+    day = data.get('day')
+    period = data.get('period')
+    subject = data.get('subject')
+    
+    if not day or not period:
+        return jsonify({'success': False, 'message': 'Missing data'}), 400
+
+    # Determine class for the subject
+    class_name = get_class_from_subject(subject) if subject else None
+    
+    # VALIDATION 1: Check if class already has a subject at this time (from another teacher)
+    if subject:
+        if not class_name:
+            return jsonify({'success': False, 'message': f'Subject "{subject}" not mapped to any class.'}), 400
+            
+        # Find all subjects mapped to this class
+        mapping = get_class_subject_mapping()
+        class_subjects = mapping.get(class_name, [])
+        
+        existing_class_record = TeacherTimetable.query.filter(
+            TeacherTimetable.day == day,
+            TeacherTimetable.period == period,
+            TeacherTimetable.subject.in_(class_subjects),
+            TeacherTimetable.teacher_id != teacher_id
+        ).first()
+        
+        if existing_class_record:
+            return jsonify({'success': False, 'message': f'Class {class_name} already has {existing_class_record.subject} at this time (Teacher: {existing_class_record.teacher.name})'}), 400
+
+    # VALIDATION 2: Prevent teacher having multiple classes at same time 
+    # (Implicitly handled if we only allow one subject per teacher per slot, but let's be explicit)
+    # Actually, in the teacher's own grid, they are just updating their own slot.
+    # But if they try to assign a subject that belongs to a class which is ALREADY busy with another teacher, we caught it above.
+    
+    # Find or create record
+    record = TeacherTimetable.query.filter_by(teacher_id=teacher_id, day=day, period=period).first()
+    
+    if subject:
+        if record:
+            record.subject = subject
+        else:
+            new_record = TeacherTimetable(teacher_id=teacher_id, day=day, period=period, subject=subject)
+            db.session.add(new_record)
+    else:
+        # If subject is empty/None, remove the record
+        if record:
+            db.session.delete(record)
+            
+    db.session.commit()
+    return jsonify({'success': True, 'class_name': class_name})
+
+@app.route('/student/timetable')
+def student_timetable():
+    if session.get('role') != 'Student': return redirect(url_for('login'))
+    
+    student = User.query.get(session.get('user_id'))
+    student_class = student.department # department field stores Class for students
+    
+    # Get subjects for this class
+    mapping = get_class_subject_mapping()
+    class_subjects = mapping.get(student_class, [])
+    
+    # Fetch all teacher timetable records that involve these subjects
+    timetable_records = TeacherTimetable.query.filter(TeacherTimetable.subject.in_(class_subjects)).all()
+    
+    # Organize: {day: {period: {subject: subject, teacher: teacher_name}}}
+    timetable_data = {}
+    for record in timetable_records:
+        if record.day not in timetable_data: timetable_data[record.day] = {}
+        timetable_data[record.day][record.period] = {
+            'subject': record.subject,
+            'teacher': record.teacher.name
+        }
+        
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    periods = range(1, 8)
+    
+    return render_template('student/timetable.html', 
+                           timetable_data=timetable_data, 
+                           days=days, 
+                           periods=periods,
+                           student_class=student_class)
 
 if __name__ == '__main__':
     app.run(debug=True)
