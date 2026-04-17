@@ -24,7 +24,12 @@
                 <td style="font-weight: 600;">{{ leave.user.name }}</td>
                 <td>{{ leave.role }}</td>
                 <td>{{ leave.user.department if leave.role == 'Teacher' else leave.user.roll_no }}</td>
-                <td>{{ leave.dates }}</td>
+                <td>
+                    {{ leave.dates }}
+                    {% if leave.start_time %}
+                        <br><small style="color: var(--primary); font-weight: 700;">Starts at: {{ leave.start_time }}</small>
+                    {% endif %}
+                </td>
                 <td style="max-width: 300px;">{{ leave.reason }}</td>
                 <td>
                     {% if leave.document_path %}

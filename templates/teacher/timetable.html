@@ -23,9 +23,10 @@
                 <td class="day-cell">{{ day }}</td>
                 {% for p in periods %}
                     {% if p == 5 %}
-                        <td class="lunch-break">BREAK</td>
+                        <td class="lunch-break" data-label="Lunch">BREAK</td>
                     {% endif %}
                     <td class="timetable-td edit-trigger" 
+                        data-label="Period {{ p }}"
                         data-day="{{ day }}" 
                         data-period="{{ p }}" 
                         data-subject="{{ timetable_data.get(day, {}).get(p, '') }}">
@@ -44,6 +45,44 @@
             {% endfor %}
         </tbody>
     </table>
+</div>
+
+{% if mentor_class %}
+<div class="curriculum-section" style="margin-top: 3rem; background: white; padding: 2rem; border-radius: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main);">Class Curriculum: {{ mentor_class }}</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Subjects currently available for this class.</p>
+        </div>
+        <div style="background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.75rem; font-weight: 700;">
+            Mentor View
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem;">
+        <!-- Add New Subject Card -->
+        <div class="add-sub-card" style="border: 2px dashed #e2e8f0; border-radius: 1rem; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; min-height: 120px;" onclick="document.getElementById('quickAddInput').focus()">
+            <form action="{{ url_for('manage_subjects') }}" method="POST" style="width: 100%; text-align: center;">
+                <input type="hidden" name="class_name" value="{{ mentor_class }}">
+                <input type="text" id="quickAddInput" name="subject" placeholder="New Subject..." style="width: 100%; border: none; background: transparent; text-align: center; font-weight: 600; outline: none; margin-bottom: 0.5rem;" required>
+                <button type="submit" class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.75rem;"><i class="fas fa-plus"></i> Add Subject</button>
+            </form>
+        </div>
+
+        {% set current_class_subs = class_mapping.get(mentor_class, []) %}
+        {% for sub in current_class_subs %}
+        <div class="sub-card" style="background: #f8fafc; border-radius: 1rem; padding: 1.25rem; border: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">{{ sub }}</span>
+            <i class="fas fa-check-circle" style="color: var(--success); font-size: 0.8rem; opacity: 0.5;"></i>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="alert alert-info" style="margin-top: 2rem; border-radius: 1rem;">
+    <i class="fas fa-info-circle"></i>
+    <span>Tip: You can edit any slot in the timetable above to assign a subject and period.</span>
 </div>
 
 <!-- Edit Modal -->
