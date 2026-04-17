@@ -16,8 +16,8 @@
             <textarea name="reason" id="reason" class="form-control" rows="5" placeholder="Explain your reason clearly..." required></textarea>
         </div>
         <div class="form-group">
-            <label for="document">Attachment (Optional - PDF/Image)</label>
-            <input type="file" name="document" id="document" class="form-control" accept=".pdf,.png,.jpg,.jpeg">
+            <label for="document">Attachment (Optional - JPG/PNG) <small style="color: var(--primary); font-weight: normal; margin-left: 0.5rem;"><i class="fas fa-info-circle"></i> Only JPG & PNG allowed</small></label>
+            <input type="file" name="document" id="document" class="form-control" accept=".png,.jpg,.jpeg">
         </div>
         <div style="display: flex; gap: 1rem;">
             <button type="submit" class="btn btn-primary">
@@ -60,6 +60,15 @@ document.getElementById('leaveForm').onsubmit = function(e) {
     if (startDate < today) {
         alert("Error: Cannot apply for past dates!");
         return false;
+    }
+
+    const documentInput = document.getElementById('document');
+    if (documentInput.files.length > 0) {
+        const file = documentInput.files[0];
+        if (!file.name.toLowerCase().match(/\.(jpg|jpeg|png)$/)) {
+            alert("Invalid file type! Please attach only JPG or PNG files.");
+            return false;
+        }
     }
 
     return true;

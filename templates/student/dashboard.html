@@ -5,10 +5,10 @@
 
 {% block content %}
 <!-- Profile Header -->
-<div style="margin-bottom: 2rem; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 2rem; border-radius: 1.5rem; color: white;">
-    <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Welcome, {{ session.get('name') }}!</h2>
-    <p style="opacity: 0.9; font-size: 1.1rem;">
-        <i class="fas fa-graduation-cap"></i> Class: <strong>{{ session.get('department') }}</strong>
+<div class="glass-card" style="margin-bottom: 2rem; padding: 2rem; border: 1px solid rgba(255,255,255,1); background: rgba(255,255,255,0.4);">
+    <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem; color: var(--text-main);">Welcome, {{ session.get('name') }}!</h2>
+    <p style="color: var(--text-muted); font-size: 1.1rem; font-weight: 500;">
+        <i class="fas fa-graduation-cap" style="color: var(--primary);"></i> Class: <span style="color: var(--text-main);">{{ session.get('department') }}</span>
     </p>
 </div>
 
@@ -28,7 +28,7 @@
     </div>
 </div>
 
-<div class="card-section" style="background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+<div class="card-section glass-card" style="padding: 2rem;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
         <h2 style="font-size: 1.25rem;">My Leave History</h2>
         <a href="{{ url_for('apply_leave') }}" class="btn btn-primary btn-sm" style="padding: 0.5rem 1rem;">
@@ -45,6 +45,7 @@
                     <th>Reason</th>
                     <th>Doc</th>
                     <th>Status</th>
+                    <th>Remark</th>
                 </tr>
             </thead>
             <tbody>
@@ -63,10 +64,17 @@
                         {% endif %}
                     </td>
                     <td><span class="badge badge-{{ leave.status.lower() }}">{{ leave.status }}</span></td>
+                    <td style="max-width: 200px; font-size: 0.85rem; color: var(--text-muted);">
+                        {% if leave.remark %}
+                            {{ leave.remark }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">You haven't applied for any leaves yet.</td>
+                    <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">You haven't applied for any leaves yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>

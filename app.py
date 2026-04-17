@@ -21,6 +21,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB limit
 
+# Ensure upload directory exists
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 # Email Configuration
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
 app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
@@ -31,7 +34,7 @@ app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
 
 mail = Mail(app)
 
-ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -95,6 +98,7 @@ class LeaveRequest(db.Model):
     dates = db.Column(db.String(100), nullable=False)
     document_path = db.Column(db.String(200)) # Path to uploaded file
     status = db.Column(db.String(20), default='Pending') # Pending, Approved, Rejected
+    remark = db.Column(db.Text, nullable=True) # Comment/Remark by Admin or Teacher
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationship to user
@@ -389,7 +393,7 @@ def apply_leave():
     else:
         return render_template('student/apply_leave.html')
 
-@app.route('/update_leave/<int:leave_id>/<string:status>')
+@app.route('/update_leave/<int:leave_id>/<string:status>', methods=['GET', 'POST'])
 def update_leave(leave_id, status):
     if 'user_id' not in session: return redirect(url_for('login'))
     leave = LeaveRequest.query.get(leave_id)
@@ -412,6 +416,10 @@ def update_leave(leave_id, status):
         flash('Unauthorized action', 'danger')
         return redirect(url_for('dashboard'))
         
+    remark = request.values.get('remark')
+    if remark:
+        leave.remark = remark
+        
     db.session.commit()
     
     # Send Email Notification if Approved
@@ -424,6 +432,7 @@ def update_leave(leave_id, status):
     socketio.emit('leave_status_changed', {
         'id': leave_id,
         'status': status,
+        'remark': leave.remark,
         'message': f"Your leave request has been {status}."
     }, to=f"user_{leave.user_id}")
     

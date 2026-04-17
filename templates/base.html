@@ -17,14 +17,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     {% block extra_css %}{% endblock %}
 </head>
-
 <body>
+    <!-- Modern SaaS Abstract Background Elements -->
+    <div class="bg-blobs">
+        <div class="blob shape-1"></div>
+        <div class="blob shape-2"></div>
+        <div class="blob shape-3"></div>
+        <div class="blob shape-4"></div>
+    </div>
+
     <div class="app-container">
         {% if session.get('user_id') %}
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <i class="fas fa-university logo-icon"></i>
+                <img src="{{ url_for('static', filename='images/college_logo.jpg') }}" alt="Logo" style="height: 32px; width: auto; margin-right: 8px; border-radius: 4px;">
                 <span class="logo-text">LeaveSystem</span>
             </div>
 

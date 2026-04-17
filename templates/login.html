@@ -6,7 +6,7 @@
 <div class="login-page">
     <div class="login-card">
         <div class="login-header">
-            <i class="fas fa-university logo-icon" style="font-size: 3rem; margin-bottom: 1rem; color: var(--primary);"></i>
+            <img src="{{ url_for('static', filename='images/college_logo.jpg') }}" alt="College Logo" style="height: 100px; width: auto; margin-bottom: 1.5rem; border-radius: 50%; border: 4px solid var(--white); box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
             <h2>Welcome Back</h2>
             <p>Please enter your credentials to continue</p>
         </div>
@@ -43,13 +43,7 @@
             </button>
         </form>
 
-        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: center;">
-            <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.6;">
-                <strong>Admin:</strong> admin / admin123<br>
-                <strong>Teacher:</strong> Name / Dept<br>
-                <strong>Student:</strong> Roll No / DOB
-            </p>
-        </div>
+
     </div>
 </div>
 {% endblock %}

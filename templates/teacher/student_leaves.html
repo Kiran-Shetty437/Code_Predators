@@ -21,16 +21,16 @@
             {% for leave in leaves %}
             <tr>
                 <td style="font-weight: 600;">{{ leave.user.name }}</td>
-                <td><code style="background: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 4px;">{{ leave.user.roll_no }}</code></td>
+                <td><code style="background: var(--primary-light); color: var(--primary); border: 1px solid rgba(79, 70, 229, 0.2); padding: 0.2rem 0.6rem; border-radius: 6px; font-weight: 600;">{{ leave.user.roll_no }}</code></td>
                 <td>{{ leave.dates }}</td>
                 <td style="max-width: 300px;">{{ leave.reason }}</td>
                 <td>
                     {% if leave.document_path %}
-                    <a href="{{ url_for('static', filename='uploads/' + leave.document_path) }}" target="_blank" class="btn" style="padding: 0.2rem 0.4rem; background: #f1f5f9; color: var(--primary);">
+                    <a href="{{ url_for('static', filename='uploads/' + leave.document_path) }}" target="_blank" class="btn" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background: var(--primary-light); color: var(--primary); border: 1px solid rgba(79, 70, 229, 0.1);">
                         <i class="fas fa-file-alt"></i> View
                     </a>
                     {% else %}
-                    <span style="color: #cbd5e1; font-size: 0.75rem;">None</span>
+                    <span style="color: var(--text-muted); font-size: 0.75rem;">None</span>
                     {% endif %}
                 </td>
                 <td>
@@ -41,13 +41,13 @@
                 <td>
                     {% if leave.status == 'Pending' %}
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <a href="{{ url_for('update_leave', leave_id=leave.id, status='Approved') }}" class="btn btn-success" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+                        <a href="#" onclick="updateLeaveWithRemark({{ leave.id }}, 'Approved')" class="btn btn-success" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
                             <i class="fas fa-check"></i> Approve
                         </a>
-                        <a href="{{ url_for('update_leave', leave_id=leave.id, status='Rejected') }}" class="btn btn-danger" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+                        <a href="#" onclick="updateLeaveWithRemark({{ leave.id }}, 'Rejected')" class="btn btn-danger" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
                             <i class="fas fa-times"></i> Reject
                         </a>
-                        <a href="{{ url_for('update_leave', leave_id=leave.id, status='Forwarded to Admin') }}" class="btn" style="padding: 0.4rem 0.6rem; font-size: 0.75rem; background: var(--secondary); color: white;">
+                        <a href="#" onclick="updateLeaveWithRemark({{ leave.id }}, 'Forwarded to Admin')" class="btn" style="padding: 0.4rem 0.6rem; font-size: 0.75rem; background: var(--secondary); color: white;">
                             <i class="fas fa-share"></i> Forward to Admin
                         </a>
                     </div>
@@ -68,4 +68,30 @@
         </tbody>
     </table>
 </div>
+
+<script>
+function updateLeaveWithRemark(leaveId, status) {
+    let remark = "";
+    if (status === "Rejected") {
+        remark = prompt(`Enter optional remark/comment for rejecting this request:`);
+        if (remark === null) {
+            return; // User cancelled
+        }
+    }
+    
+    // Create form and submit
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/update_leave/${leaveId}/${status}`;
+    
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'remark';
+    input.value = remark;
+    
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
 {% endblock %}

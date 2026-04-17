@@ -28,11 +28,11 @@
                 <td style="max-width: 300px;">{{ leave.reason }}</td>
                 <td>
                     {% if leave.document_path %}
-                    <a href="{{ url_for('static', filename='uploads/' + leave.document_path) }}" target="_blank" class="btn" style="padding: 0.2rem 0.4rem; background: #f1f5f9; color: var(--primary);">
+                    <a href="{{ url_for('static', filename='uploads/' + leave.document_path) }}" target="_blank" class="btn" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background: var(--primary-light); color: var(--primary); border: 1px solid rgba(79, 70, 229, 0.1);">
                         <i class="fas fa-file-alt"></i> View
                     </a>
                     {% else %}
-                    <span style="color: #cbd5e1; font-size: 0.75rem;">None</span>
+                    <span style="color: var(--text-muted); font-size: 0.75rem;">None</span>
                     {% endif %}
                 </td>
                 <td id="status-cell-{{ leave.id }}">
@@ -43,10 +43,10 @@
                 <td id="actions-cell-{{ leave.id }}">
                     {% if (leave.role == 'Teacher' or leave.status == 'Forwarded to Admin') and (leave.status != 'Approved' and leave.status != 'Rejected') %}
                     <div style="display: flex; gap: 0.5rem;">
-                        <a href="{{ url_for('update_leave', leave_id=leave.id, status='Approved') }}" class="btn btn-success" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+                        <a href="#" onclick="updateLeaveWithRemark({{ leave.id }}, 'Approved')" class="btn btn-success" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
                             <i class="fas fa-check"></i> Approve
                         </a>
-                        <a href="{{ url_for('update_leave', leave_id=leave.id, status='Rejected') }}" class="btn btn-danger" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+                        <a href="#" onclick="updateLeaveWithRemark({{ leave.id }}, 'Rejected')" class="btn btn-danger" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
                             <i class="fas fa-times"></i> Reject
                         </a>
                     </div>
@@ -89,16 +89,16 @@
             <td>-</td> 
             <td>${data.dates}</td>
             <td style="max-width: 300px;">${data.reason}</td>
-            <td><span style="color: #cbd5e1; font-size: 0.75rem;">Pending Refresh</span></td>
+            <td><span style="color: var(--text-muted); font-size: 0.75rem;">Pending Refresh</span></td>
             <td id="status-cell-${data.id}">
                 <span class="badge badge-pending">Pending</span>
             </td>
             <td id="actions-cell-${data.id}">
                 <div style="display: flex; gap: 0.5rem;">
-                    <a href="/update_leave/${data.id}/Approved" class="btn btn-success" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+                    <a href="#" onclick="updateLeaveWithRemark(${data.id}, 'Approved')" class="btn btn-success" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
                         <i class="fas fa-check"></i> Approve
                     </a>
-                    <a href="/update_leave/${data.id}/Rejected" class="btn btn-danger" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+                    <a href="#" onclick="updateLeaveWithRemark(${data.id}, 'Rejected')" class="btn btn-danger" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
                         <i class="fas fa-times"></i> Reject
                     </a>
                 </div>
@@ -121,6 +121,30 @@
             document.getElementById(`actions-cell-${data.id}`).innerHTML = '<span style="color: var(--text-muted); font-size: 0.75rem;">Processed</span>';
         }
     });
+
+    function updateLeaveWithRemark(leaveId, status) {
+        let remark = "";
+        if (status === "Rejected") {
+            remark = prompt(`Enter optional remark/comment for rejecting this request:`);
+            if (remark === null) {
+                return; // User cancelled
+            }
+        }
+        
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/update_leave/${leaveId}/${status}`;
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'remark';
+        input.value = remark;
+        
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+    }
 </script>
 
 <style>
