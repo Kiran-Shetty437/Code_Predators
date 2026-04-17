@@ -5,10 +5,10 @@
 
 {% block content %}
 <!-- Profile Header -->
-<div style="margin-bottom: 2rem; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 2rem; border-radius: 1.5rem; color: white;">
-    <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Welcome, {{ session.get('name') }}!</h2>
-    <p style="opacity: 0.9; font-size: 1.1rem;">
-        <i class="fas fa-chalkboard-teacher"></i> Department: <strong>{{ session.get('department') }}</strong>
+<div class="glass-card" style="margin-bottom: 2rem; padding: 2rem; border: 1px solid rgba(255,255,255,1); background: rgba(255,255,255,0.4);">
+    <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem; color: var(--text-main);">Welcome, {{ session.get('name') }}!</h2>
+    <p style="color: var(--text-muted); font-size: 1.1rem; font-weight: 500;">
+        <i class="fas fa-chalkboard-teacher" style="color: var(--primary);"></i> Department: <span style="color: var(--text-main);">{{ session.get('department') }}</span>
     </p>
 </div>
 
@@ -37,7 +37,7 @@
     </div>
 </div>
 
-<div class="card-section" style="background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+<div class="card-section glass-card" style="padding: 2rem;">
     <h2 style="margin-bottom: 1.5rem; font-size: 1.25rem;">My Recent Leave Requests</h2>
     <div class="table-container" style="box-shadow: none;">
         <table>
@@ -46,18 +46,29 @@
                     <th>Dates</th>
                     <th>Reason</th>
                     <th>Status</th>
+                    <th>Remark</th>
                 </tr>
             </thead>
             <tbody id="my-leaves-tbody">
                 {% for leave in my_leaves[::-1] %}
                 <tr id="my-leave-row-{{ leave.id }}">
-                    <td>{{ leave.dates }}</td>
+                    <td>
+                        {{ leave.dates }}
+                        {% if leave.start_time %}<br><small style="color: var(--primary); font-weight: 600;">Starts: {{ leave.start_time }}</small>{% endif %}
+                    </td>
                     <td>{{ leave.reason }}</td>
                     <td id="my-leave-status-{{ leave.id }}"><span class="badge badge-{{ leave.status.lower() }}">{{ leave.status }}</span></td>
+                    <td style="max-width: 200px; font-size: 0.85rem; color: var(--text-muted);">
+                        {% if leave.remark %}
+                            {{ leave.remark }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                 </tr>
                 {% else %}
                 <tr id="no-my-leaves-row">
-                    <td colspan="3" style="text-align: center; color: var(--text-muted);">You haven't applied for any leaves yet.</td>
+                    <td colspan="4" style="text-align: center; color: var(--text-muted);">You haven't applied for any leaves yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>

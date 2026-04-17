@@ -17,14 +17,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     {% block extra_css %}{% endblock %}
 </head>
-
 <body>
+    <!-- Modern SaaS Abstract Background Elements -->
+    <div class="bg-blobs">
+        <div class="blob shape-1"></div>
+        <div class="blob shape-2"></div>
+        <div class="blob shape-3"></div>
+        <div class="blob shape-4"></div>
+    </div>
+
     <div class="app-container">
         {% if session.get('user_id') %}
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <i class="fas fa-university logo-icon"></i>
+                <img src="{{ url_for('static', filename='images/college_logo.jpg') }}" alt="Logo" style="height: 32px; width: auto; margin-right: 8px; border-radius: 4px;">
                 <span class="logo-text">LeaveSystem</span>
             </div>
 
@@ -60,6 +67,11 @@
                     class="nav-item {% if request.path == url_for('leave_reports') %}active{% endif %}">
                     <i class="fas fa-file-invoice"></i>
                     <span>Leave Reports</span>
+                </a>
+                <a href="{{ url_for('manage_subjects') }}"
+                    class="nav-item {% if request.path == url_for('manage_subjects') %}active{% endif %}">
+                    <i class="fas fa-book"></i>
+                    <span>Manage Subjects</span>
                 </a>
                 {% endif %}
 
@@ -170,7 +182,7 @@
     <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 10000; pointer-events: none;"></div>
 
     <script>
-        const currentUserRole = "{{ session.get('role') }}";
+        const CURRENT_USER_ROLE = "{{ session.get('role', '') }}";
 
         // Global showToast function
         function showToast(message, type = 'info') {
@@ -241,20 +253,20 @@
         });
 
         globalSocket.on('new_student_leave', (data) => {
-            if (currentUserRole === 'Teacher') {
+            if (CURRENT_USER_ROLE === 'Teacher') {
                 showToast(`New leave request from ${data.student_name} (${data.student_class})`, 'info');
                 // Optional: Play a subtle sound
             }
         });
 
         globalSocket.on('student_absence_alert', (data) => {
-            if (currentUserRole === 'Teacher') {
+            if (CURRENT_USER_ROLE === 'Teacher') {
                 showToast(data.message, data.type || 'warning');
             }
         });
 
         globalSocket.on('new_leave_submitted', (data) => {
-            if (currentUserRole === 'Admin') {
+            if (CURRENT_USER_ROLE === 'Admin') {
                 showToast(`New ${data.role} leave request: ${data.name}`, 'info');
             }
         });

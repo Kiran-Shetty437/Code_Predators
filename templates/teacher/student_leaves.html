@@ -21,16 +21,16 @@
             {% for leave in leaves %}
             <tr>
                 <td style="font-weight: 600;">{{ leave.user.name }}</td>
-                <td><code style="background: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 4px;">{{ leave.user.roll_no }}</code></td>
+                <td><code style="background: var(--primary-light); color: var(--primary); border: 1px solid rgba(79, 70, 229, 0.2); padding: 0.2rem 0.6rem; border-radius: 6px; font-weight: 600;">{{ leave.user.roll_no }}</code></td>
                 <td>{{ leave.dates }}</td>
                 <td style="max-width: 300px;">{{ leave.reason }}</td>
                 <td>
                     {% if leave.document_path %}
-                    <a href="{{ url_for('static', filename='uploads/' + leave.document_path) }}" target="_blank" class="btn" style="padding: 0.2rem 0.4rem; background: #f1f5f9; color: var(--primary);">
+                    <a href="{{ url_for('static', filename='uploads/' + leave.document_path) }}" target="_blank" class="btn" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background: var(--primary-light); color: var(--primary); border: 1px solid rgba(79, 70, 229, 0.1);">
                         <i class="fas fa-file-alt"></i> View
                     </a>
                     {% else %}
-                    <span style="color: #cbd5e1; font-size: 0.75rem;">None</span>
+                    <span style="color: var(--text-muted); font-size: 0.75rem;">None</span>
                     {% endif %}
                 </td>
                 <td>
@@ -41,15 +41,15 @@
                 <td>
                     {% if leave.status == 'Pending' %}
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <a href="{{ url_for('update_leave', leave_id=leave.id, status='Approved') }}" class="btn btn-success" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+                        <button type="button" class="btn btn-success action-btn" data-id="{{ leave.id }}" data-status="Approved" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
                             <i class="fas fa-check"></i> Approve
-                        </a>
-                        <a href="{{ url_for('update_leave', leave_id=leave.id, status='Rejected') }}" class="btn btn-danger" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+                        </button>
+                        <button type="button" class="btn btn-danger action-btn" data-id="{{ leave.id }}" data-status="Rejected" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
                             <i class="fas fa-times"></i> Reject
-                        </a>
-                        <a href="{{ url_for('update_leave', leave_id=leave.id, status='Forwarded to Admin') }}" class="btn" style="padding: 0.4rem 0.6rem; font-size: 0.75rem; background: var(--secondary); color: white;">
+                        </button>
+                        <button type="button" class="btn action-btn" data-id="{{ leave.id }}" data-status="Forwarded to Admin" style="padding: 0.4rem 0.6rem; font-size: 0.75rem; background: var(--secondary); color: white;">
                             <i class="fas fa-share"></i> Forward to Admin
-                        </a>
+                        </button>
                     </div>
                     {% elif leave.status == 'Forwarded to Admin' %}
                     <span style="color: var(--primary); font-size: 0.75rem; font-weight: 600;">Awaiting Admin Action</span>
@@ -109,15 +109,15 @@
             </td>
             <td id="actions-cell-${data.id}">
                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <a href="/update_leave/${data.id}/Approved" class="btn btn-success" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+                    <button type="button" class="btn btn-success action-btn-dynamic" onclick="updateLeaveWithRemark('${data.id}', 'Approved')" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
                         <i class="fas fa-check"></i> Approve
-                    </a>
-                    <a href="/update_leave/${data.id}/Rejected" class="btn btn-danger" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+                    </button>
+                    <button type="button" class="btn btn-danger action-btn-dynamic" onclick="updateLeaveWithRemark('${data.id}', 'Rejected')" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
                         <i class="fas fa-times"></i> Reject
-                    </a>
-                    <a href="/update_leave/${data.id}/Forwarded to Admin" class="btn" style="padding: 0.4rem 0.6rem; font-size: 0.75rem; background: var(--secondary); color: white;">
+                    </button>
+                    <button type="button" class="btn action-btn-dynamic" onclick="updateLeaveWithRemark('${data.id}', 'Forwarded to Admin')" style="padding: 0.4rem 0.6rem; font-size: 0.75rem; background: var(--secondary); color: white;">
                         <i class="fas fa-share"></i> Forward to Admin
-                    </a>
+                    </button>
                 </div>
             </td>
         `;
@@ -144,5 +144,40 @@
             }
         }
     });
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.body.addEventListener('click', function(e) {
+        if (e.target.closest('.action-btn')) {
+            const btn = e.target.closest('.action-btn');
+            const leaveId = btn.dataset.id;
+            const status = btn.dataset.status;
+            updateLeaveWithRemark(leaveId, status);
+        }
+    });
+});
+
+function updateLeaveWithRemark(leaveId, status) {
+    let remark = "";
+    if (status === "Rejected") {
+        remark = prompt(`Enter optional remark/comment for rejecting this request:`);
+        if (remark === null) {
+            return; // User cancelled
+        }
+    }
+    
+    // Create form and submit
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/update_leave/${leaveId}/${status}`;
+    
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'remark';
+    input.value = remark;
+    
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+}
 </script>
 {% endblock %}

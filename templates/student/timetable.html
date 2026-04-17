@@ -23,9 +23,9 @@
                 <td class="day-cell">{{ day }}</td>
                 {% for p in periods %}
                     {% if p == 5 %}
-                        <td rowspan="1" class="lunch-break">BREAK</td>
+                        <td class="lunch-break" data-label="Lunch">BREAK</td>
                     {% endif %}
-                    <td>
+                    <td data-label="Period {{ p }}">
                         <div class="timetable-cell">
                             {% if timetable_data.get(day, {}).get(p) %}
                                 <span class="subject-name">{{ timetable_data[day][p].subject }}</span>

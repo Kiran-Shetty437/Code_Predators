@@ -23,17 +23,21 @@
                 <td class="day-cell">{{ day }}</td>
                 {% for p in periods %}
                 {% if p == 5 %}
-                <td class="lunch-break">BREAK</td>
+                <td class="lunch-break" data-label="Lunch">BREAK</td>
                 {% endif %}
-                <td class="timetable-td" data-day="{{ day }}" data-period="{{ p }}"
-                    data-subject="{{ timetable_data.get(day, {}).get(p, '') }}" onclick="makeEditable(this)">
-                    <div class="timetable-cell editable">
+                <td class="timetable-td edit-trigger" data-label="Period {{ p }}" data-day="{{ day }}"
+                    data-period="{{ p }}" data-subject="{{ timetable_data.get(day, {}).get(p, '') }}">
+                    <div class="timetable-cell editable" style="position: relative; min-height: 60px;">
                         {% if timetable_data.get(day, {}).get(p) %}
-                        <span class="subject-name">{{ timetable_data[day][p] }}</span>
-                        <span class="class-name" id="class-{{ day }}-{{ p }}">Loading...</span>
+                        <span class="subject-name" style="font-weight: 600; display: block;">{{ timetable_data[day][p]
+                            }}</span>
+                        <span class="class-name"
+                            style="font-size: 0.75rem; color: var(--primary); display: block; margin-top: 0.25rem;">Checking...</span>
                         {% else %}
-                        <span class="empty-text">---</span>
+                        <span class="empty-text" style="color: #cbd5e1;">---</span>
                         {% endif %}
+                        <i class="fas fa-pencil-alt edit-icon"
+                            style="position: absolute; top: 5px; right: 5px; font-size: 0.7rem; color: #94a3b8; opacity: 0.5;"></i>
                     </div>
                 </td>
                 {% endfor %}
@@ -43,16 +47,88 @@
     </table>
 </div>
 
-<datalist id="subjectList">
-    {% for subject in all_subjects %}
-    <option value="{{ subject }}">
-        {% endfor %}
-</datalist>
+{% if mentor_class %}
+<div class="curriculum-section"
+    style="margin-top: 3rem; background: white; padding: 2rem; border-radius: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main);">Class Curriculum: {{ mentor_class
+                }}</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Subjects currently available
+                for this class.</p>
+        </div>
+        <div
+            style="background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.75rem; font-weight: 700;">
+            Mentor View
+        </div>
+    </div>
 
-<!-- Store mapping cleanly in HTML to avoid JS syntax errors from Jinja injection -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem;">
+        <div class="add-sub-card"
+            style="border: 2px dashed #e2e8f0; border-radius: 1rem; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; min-height: 120px;"
+            onclick="document.getElementById('quickAddInput').focus()">
+            <form action="{{ url_for('manage_subjects') }}" method="POST" style="width: 100%; text-align: center;">
+                <input type="hidden" name="class_name" value="{{ mentor_class }}">
+                <input type="text" id="quickAddInput" name="subject" placeholder="New Subject..."
+                    style="width: 100%; border: none; background: transparent; text-align: center; font-weight: 600; outline: none; margin-bottom: 0.5rem;"
+                    required>
+                <button type="submit" class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.75rem;"><i
+                        class="fas fa-plus"></i> Add Subject</button>
+            </form>
+        </div>
+
+        {% set current_class_subs = class_mapping.get(mentor_class, []) %}
+        {% for sub in current_class_subs %}
+        <div class="sub-card"
+            style="background: #f8fafc; border-radius: 1rem; padding: 1.25rem; border: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">{{ sub }}</span>
+            <i class="fas fa-check-circle" style="color: var(--success); font-size: 0.8rem; opacity: 0.5;"></i>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="alert alert-info" style="margin-top: 2rem; border-radius: 1rem;">
+    <i class="fas fa-info-circle"></i>
+    <span>Tip: Click any cell to write or edit subjects. The system will automatically link them to the correct
+        class.</span>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Edit Period</h3>
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="subjectInput">Enter Subject Name</label>
+                <input type="text" id="subjectInput" class="form-control" list="subjectList"
+                    placeholder="e.g. Java, DBMS..." autocomplete="off">
+                <datalist id="subjectList">
+                    {% for subject in all_subjects %}
+                    <option value="{{ subject }}">
+                        {% endfor %}
+                </datalist>
+            </div>
+            <div id="modalError" class="alert alert-danger"
+                style="display: none; padding: 0.75rem; font-size: 0.8rem; margin-top: 1rem;"></div>
+        </div>
+        <div class="timetable-actions"
+            style="padding: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem; border-top: 1px solid var(--border);">
+            <button class="btn" style="background: #e2e8f0;" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveCell()" id="saveBtn">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<!-- Store mapping cleanly in HTML -->
 <meta id="class-mapping-data" data-mapping="{{ class_mapping | tojson | forceescape }}">
 
 <script>
+    let currentDay, currentPeriod;
     const mappingMeta = document.getElementById('class-mapping-data');
     const classMapping = mappingMeta && mappingMeta.dataset.mapping ? JSON.parse(mappingMeta.dataset.mapping) : {};
 
@@ -65,151 +141,85 @@
         return '';
     }
 
-    async function saveCell(day, period, subject, cellElement) {
+    function openEditModal(day, period, subject) {
+        currentDay = day;
+        currentPeriod = period;
+
+        const subjectInput = document.getElementById('subjectInput');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalError = document.getElementById('modalError');
+
+        modalTitle.innerText = `Edit: ${day} - Period ${period}`;
+        subjectInput.value = subject;
+
+        document.getElementById('editModal').style.display = 'block';
+        modalError.style.display = 'none';
+
+        setTimeout(() => {
+            subjectInput.focus();
+            subjectInput.select();
+        }, 100);
+    }
+
+    function closeModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+
+    async function saveCell() {
+        const subject = document.getElementById('subjectInput').value.trim();
+        const errorDiv = document.getElementById('modalError');
+        const saveBtn = document.getElementById('saveBtn');
+
+        errorDiv.style.display = 'none';
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'Saving...';
+
         try {
             const response = await fetch('/api/save_timetable', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ day, period, subject })
+                body: JSON.stringify({
+                    day: currentDay,
+                    period: currentPeriod,
+                    subject: subject
+                })
             });
 
             const result = await response.json();
-
-            if (!result.success) {
-                alert("Error saving: " + result.message);
+            if (result.success) {
                 window.location.reload();
-                return false;
-            }
-
-            cellElement.dataset.subject = subject;
-            return true;
-        } catch (e) {
-            console.error("Save error:", e);
-            alert("Connection error while saving.");
-            return false;
-        }
-    }
-
-    function restoreCellHTML(cell, subject) {
-        let content = '';
-        if (subject && subject.trim() !== '') {
-            const clsName = getClassFromSubject(subject);
-            content = `<div class="timetable-cell editable">
-                <span class="subject-name">${subject}</span>
-                <span class="class-name">${clsName || 'Class not found'}</span>
-            </div>`;
-        } else {
-            content = `<div class="timetable-cell editable"><span class="empty-text">---</span></div>`;
-        }
-        cell.innerHTML = content;
-    }
-
-    function makeEditable(cell) {
-        if (cell.querySelector('input')) return;
-
-        const day = cell.dataset.day;
-        const period = cell.dataset.period;
-        const currentSubject = cell.dataset.subject || '';
-
-        const inputArea = document.createElement('div');
-        inputArea.style.display = 'flex';
-        inputArea.style.alignItems = 'center';
-        inputArea.style.gap = '5px';
-        inputArea.style.width = '100%';
-
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = currentSubject;
-        input.setAttribute('list', 'subjectList');
-        input.className = 'form-control';
-        input.style.width = '100%';
-        input.style.minWidth = '100px';
-        input.style.padding = '0.3rem';
-
-        const clearBtn = document.createElement('button');
-        clearBtn.innerHTML = '&times;';
-        clearBtn.title = 'Clear Slot';
-        clearBtn.style.background = 'none';
-        clearBtn.style.border = 'none';
-        clearBtn.style.color = '#e53e3e';
-        clearBtn.style.cursor = 'pointer';
-        clearBtn.style.fontSize = '1.2rem';
-        clearBtn.style.padding = '0';
-        clearBtn.style.lineHeight = '1';
-
-        inputArea.appendChild(input);
-        inputArea.appendChild(clearBtn);
-
-        cell.innerHTML = '';
-        cell.appendChild(inputArea);
-
-        input.focus();
-        input.selectionStart = input.selectionEnd = input.value.length;
-
-        let isSaving = false;
-
-        async function handleSave() {
-            if (isSaving) return;
-            isSaving = true;
-            const newSub = input.value.trim();
-            if (newSub !== currentSubject) {
-                const success = await saveCell(day, period, newSub, cell);
-                if (success) {
-                    restoreCellHTML(cell, newSub);
-                } else {
-                    restoreCellHTML(cell, currentSubject);
-                }
             } else {
-                restoreCellHTML(cell, currentSubject);
+                errorDiv.innerText = result.message || "An error occurred.";
+                errorDiv.style.display = 'block';
+                saveBtn.disabled = false;
+                saveBtn.innerText = 'Save Changes';
             }
-        }
-
-        input.addEventListener('keydown', async function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                input.blur();
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                isSaving = true;
-                restoreCellHTML(cell, currentSubject);
-            } else if (e.key === 'Tab') {
-                e.preventDefault();
-                await handleSave();
-                openNextPeriod(cell);
-            }
-        });
-
-        input.addEventListener('blur', function () {
-            setTimeout(async () => {
-                if (!isSaving) await handleSave();
-            }, 150);
-        });
-
-        clearBtn.addEventListener('mousedown', async function (e) {
-            e.preventDefault();
-            input.value = '';
-            await handleSave();
-        });
-    }
-
-    function openNextPeriod(currentCell) {
-        let nextCell = currentCell.nextElementSibling;
-        if (nextCell && nextCell.classList.contains('lunch-break')) {
-            nextCell = nextCell.nextElementSibling;
-        }
-        if (nextCell && nextCell.classList.contains('timetable-td')) {
-            makeEditable(nextCell);
-        } else {
-            let nextRow = currentCell.parentElement.nextElementSibling;
-            if (nextRow) {
-                let cols = nextRow.querySelectorAll('.timetable-td');
-                if (cols.length > 0) makeEditable(cols[0]);
-            }
+        } catch (e) {
+            errorDiv.innerText = "Connection error.";
+            errorDiv.style.display = 'block';
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'Save Changes';
         }
     }
 
+    // Close modal if clicked outside
+    window.onclick = function (event) {
+        if (event.target == document.getElementById('editModal')) closeModal();
+    }
+
+    // Handle clicks via event delegation
+    document.addEventListener('click', (e) => {
+        const trigger = e.target.closest('.edit-trigger');
+        if (trigger) {
+            const day = trigger.getAttribute('data-day');
+            const period = trigger.getAttribute('data-period');
+            const subject = trigger.getAttribute('data-subject');
+            openEditModal(day, period, subject);
+        }
+    });
+
+    // Initialize class names for existing subjects
     document.addEventListener('DOMContentLoaded', () => {
-        // Find all timetable cells and automatically assign the correct class from the mapping
         document.querySelectorAll('.timetable-td').forEach(cell => {
             const subject = cell.dataset.subject;
             if (subject) {

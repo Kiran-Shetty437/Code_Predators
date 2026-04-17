@@ -21,6 +21,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB limit
 
+# Ensure upload directory exists
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 # Email Configuration
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
 app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
@@ -31,7 +34,7 @@ app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
 
 mail = Mail(app)
 
-ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -154,8 +157,10 @@ class LeaveRequest(db.Model):
     role = db.Column(db.String(20), nullable=False)
     reason = db.Column(db.Text, nullable=False)
     dates = db.Column(db.String(100), nullable=False)
+    start_time = db.Column(db.String(20)) # Added for same-day time checks
     document_path = db.Column(db.String(200)) # Path to uploaded file
     status = db.Column(db.String(20), default='Pending') # Pending, Approved, Rejected
+    remark = db.Column(db.Text, nullable=True) # Comment/Remark by Admin or Teacher
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationship to user
@@ -441,6 +446,7 @@ def apply_leave():
     if request.method == 'POST':
         reason = request.form.get('reason')
         dates = request.form.get('dates')
+        start_time_val = request.form.get('start_time') # Optional time field
         file = request.files.get('document')
         
         # Date Validation: Pattern and Past Dates
@@ -466,13 +472,34 @@ def apply_leave():
                 flash(f'Cannot apply for past dates! Today is {today.strftime("%d-%m-%Y")}.', 'warning')
                 return redirect(request.referrer)
             
-            # 9 AM Cutoff Logic for Today's Leave (Students only)
-            if session.get('role') == 'Student' and requested_start == today:
-                now_time = datetime.now().time()
-                cutoff_time = datetime.strptime("09:00:00", "%H:%M:%S").time()
-                if now_time >= cutoff_time:
-                    flash('Same-day leave must be applied before 9:00 AM!', 'danger')
-                    return redirect(request.referrer)
+            # Same-Day Leave Rules
+            if requested_start == today:
+                now_dt = datetime.now()
+                now_time = now_dt.time()
+                
+                # 1. Student Rule: Before 9:00 AM
+                if session.get('role') == 'Student':
+                    cutoff_time = datetime.strptime("09:00:00", "%H:%M:%S").time()
+                    if now_time >= cutoff_time:
+                        flash('Same-day student leave must be applied before 9:00 AM!', 'danger')
+                        return redirect(request.referrer)
+                
+                # 2. Teacher Rule: 1-hour Gap Rule
+                elif session.get('role') == 'Teacher' and start_time_val:
+                    try:
+                        # Parse user's requested leave time (e.g. "12:00")
+                        leave_dt = datetime.strptime(f"{today.strftime('%d-%m-%Y')} {start_time_val}", "%d-%m-%Y %H:%M")
+                        
+                        # Calculate time difference
+                        time_diff = leave_dt - now_dt
+                        diff_minutes = time_diff.total_seconds() / 60
+                        
+                        if diff_minutes < 60:
+                            flash('Same-day teacher leave must be applied at least 1 hour before the leave starts! In case of any emergency, please contact the Administrator.', 'danger')
+                            return redirect(request.referrer)
+                    except ValueError:
+                        flash('Invalid time format! Please use HH:MM (24-hour format)', 'warning')
+                        return redirect(request.referrer)
         except Exception as e:
             flash(f'Error parsing dates: {e}', 'warning')
             return redirect(request.referrer)
@@ -487,6 +514,7 @@ def apply_leave():
             role=session['role'], 
             reason=reason, 
             dates=dates, 
+            start_time=start_time_val,
             document_path=filename
         )
         db.session.add(new_leave)
@@ -528,6 +556,7 @@ def apply_leave():
     else:
         return render_template('student/apply_leave.html')
 
+<<<<<<< HEAD
 def get_weekdays_from_dates(dates_str):
     from datetime import datetime, timedelta
     weekdays = []
@@ -621,6 +650,9 @@ def notify_teachers_for_student_absence(leave):
             print(f"[Absence] Subject teacher notified: id={teacher_id}, subjects={subjects_str}")
 
 @app.route('/update_leave/<int:leave_id>/<string:status>')
+=======
+@app.route('/update_leave/<int:leave_id>/<string:status>', methods=['GET', 'POST'])
+>>>>>>> deefe493211b605a07e5354395c2516289ed07a7
 def update_leave(leave_id, status):
     if 'user_id' not in session: return redirect(url_for('login'))
     leave = LeaveRequest.query.get(leave_id)
@@ -642,6 +674,10 @@ def update_leave(leave_id, status):
     else:
         flash('Unauthorized action', 'danger')
         return redirect(url_for('dashboard'))
+        
+    remark = request.values.get('remark')
+    if remark:
+        leave.remark = remark
         
     db.session.commit()
     
@@ -671,9 +707,14 @@ def update_leave(leave_id, status):
     update_data = {
         'id': leave_id,
         'status': status,
+<<<<<<< HEAD
         'message': f"Leave request for {leave.user.name} has been {status}.",
         'user_id': leave.user_id,
         'role': leave.role
+=======
+        'remark': leave.remark,
+        'message': f"Leave request for {leave.user.name} has been {status}."
+>>>>>>> deefe493211b605a07e5354395c2516289ed07a7
     }
     socketio.emit('leave_status_changed', update_data, to=f"user_{leave.user_id}")
     socketio.emit('leave_status_changed', update_data, to='admin_room')
@@ -724,19 +765,85 @@ def teacher_timetable():
     for subjects in mapping.values():
         all_subjects.extend(subjects)
     all_subjects = sorted(list(set(all_subjects)))
+
+    # Identify the teacher's mentored class
+    mentor_class = None
+    mentors_path = os.path.join(app.root_path, 'mentors_data.json')
+    if os.path.exists(mentors_path):
+        with open(mentors_path, 'r') as f:
+            mentors_data = json.load(f)
+        teacher_name = (session.get('name') or "").strip().lower()
+        for mentor_info in mentors_data:
+            if (mentor_info.get('mentor1') or "").strip().lower() == teacher_name or \
+               (mentor_info.get('mentor2') or "").strip().lower() == teacher_name:
+                mentor_class = mentor_info['class_name']
+                break
     
     return render_template('teacher/timetable.html', 
                            timetable_data=timetable_data, 
                            days=days, 
                            periods=periods,
                            all_subjects=all_subjects,
-                           class_mapping=mapping)
+                           class_mapping=mapping,
+                           mentor_class=mentor_class)
+
+@app.route('/admin/subjects', methods=['GET', 'POST'])
+def manage_subjects():
+    if session.get('role') != 'Admin': return redirect(url_for('login'))
+    
+    mapping = get_class_subject_mapping()
+    
+    if request.method == 'POST':
+        class_name = request.form.get('class_name')
+        new_class_name = request.form.get('new_class_name', '').strip()
+        new_subject = request.form.get('subject').strip()
+        
+        # Use existing class if selected, otherwise use new class name
+        final_class = class_name if class_name else new_class_name
+        
+        if final_class and new_subject:
+            if final_class not in mapping:
+                mapping[final_class] = []
+            
+            if new_subject not in mapping[final_class]:
+                mapping[final_class].append(new_subject)
+                
+                # Save back to JSON
+                json_path = os.path.join(app.root_path, 'class_subjects.json')
+                with open(json_path, 'w') as f:
+                    json.dump(mapping, f, indent=2)
+                
+                flash(f'Subject "{new_subject}" added to {final_class}!', 'success')
+            else:
+                flash('Subject already exists for this class.', 'warning')
+        else:
+            flash('Please provide both Class Name and Subject.', 'danger')
+        return redirect(url_for('manage_subjects'))
+        
+    return render_template('admin/subjects.html', mapping=mapping)
+
+@app.route('/api/delete_subject', methods=['POST'])
+def delete_subject():
+    if session.get('role') != 'Admin': return jsonify({'success': False}), 403
+    data = request.json
+    class_name = data.get('class_name')
+    subject = data.get('subject')
+    
+    mapping = get_class_subject_mapping()
+    if class_name in mapping and subject in mapping[class_name]:
+        mapping[class_name].remove(subject)
+        json_path = os.path.join(app.root_path, 'class_subjects.json')
+        with open(json_path, 'w') as f:
+            json.dump(mapping, f, indent=2)
+        return jsonify({'success': True})
+    return jsonify({'success': False}), 400
 
 @app.route('/api/save_timetable', methods=['POST'])
 def save_timetable():
     if session.get('role') != 'Teacher': return jsonify({'success': False, 'message': 'Unauthorized'}), 403
     
     data = request.json
+    print(f"DEBUG: Received save_timetable request: {data}")
     teacher_id = session.get('user_id')
     day = data.get('day')
     try:
@@ -748,24 +855,80 @@ def save_timetable():
     if not day or not period:
         return jsonify({'success': False, 'message': 'Missing data'}), 400
 
-    # Determine class for the subject and get official casing
-    class_name = None
+    # 1. Determine Target Class
+    mapping = get_class_subject_mapping()
+    target_class = data.get('class_name') # Explicit selection from user
     official_subject = subject
-    if subject:
-        mapping = get_class_subject_mapping()
-        search_sub = subject.strip().lower()
-        for c_name, subjects in mapping.items():
-            for s in subjects:
-                if search_sub == s.strip().lower():
-                    class_name = c_name
-                    official_subject = s # Use the name as defined in JSON
-                    break
-            if class_name: break
     
-    # VALIDATION 1: Check if class already has a subject at this time
     if subject:
-        if not class_name:
-            return jsonify({'success': False, 'message': f'Subject "{subject}" is not in the curriculum list. Please use names like: Java, DBMS, AI...'}), 400
+        search_sub = subject.strip().lower()
+        
+        # 2. Identify the teacher's mentored class
+        user_mentored_class = None
+        mentors_path = os.path.join(app.root_path, 'mentors_data.json')
+        if os.path.exists(mentors_path):
+            with open(mentors_path, 'r') as f:
+                mentors_data = json.load(f)
+            teacher_name = (session.get('name') or "").strip().lower()
+            for mentor_info in mentors_data:
+                m1 = (mentor_info.get('mentor1') or "").strip().lower()
+                m2 = (mentor_info.get('mentor2') or "").strip().lower()
+                if m1 == teacher_name or m2 == teacher_name:
+                    user_mentored_class = mentor_info['class_name']
+                    break
+
+        # 3. Determine Target Class
+        if not target_class:
+            # Check mentored class FIRST to prevent ambiguity
+            if user_mentored_class and user_mentored_class in mapping:
+                for s in mapping[user_mentored_class]:
+                    if search_sub == s.strip().lower():
+                        target_class = user_mentored_class
+                        official_subject = s
+                        break
+            
+            # If not in mentored class, search ALL classes
+            if not target_class:
+                for c_name, subjects in mapping.items():
+                    for s in subjects:
+                        if search_sub == s.strip().lower():
+                            target_class = c_name
+                            official_subject = s
+                            break
+                    if target_class: break
+        
+        # 4. Final Fallback: First class in their department, or first class in list, or "General"
+        if not target_class:
+            user_dept = session.get('department')
+            if user_dept:
+                for c_name in mapping.keys():
+                    if user_dept.lower() in c_name.lower():
+                        target_class = c_name
+                        break
+        
+        if not target_class:
+            target_class = list(mapping.keys())[0] if mapping.keys() else "General"
+            
+        print(f"Final determined class for {subject}: {target_class}")
+        
+        # 5. Auto-add to curriculum if it's missing from target class
+        if target_class not in mapping: mapping[target_class] = []
+        if not any(s.strip().lower() == search_sub for s in mapping[target_class]):
+            mapping[target_class].append(subject)
+            json_path = os.path.join(app.root_path, 'class_subjects.json')
+            with open(json_path, 'w') as f:
+                json.dump(mapping, f, indent=2)
+            official_subject = subject
+            print(f"Auto-added {subject} to class {target_class}")
+        else:
+            # If it IS there, find the official casing
+            for s in mapping[target_class]:
+                if s.strip().lower() == search_sub:
+                    official_subject = s
+                    break
+
+        # Now we have final class_name and official_subject
+        class_name = target_class
             
         # Update search subjects to use official names for database query
         mapping = get_class_subject_mapping()
@@ -871,4 +1034,4 @@ def ai_ask():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
