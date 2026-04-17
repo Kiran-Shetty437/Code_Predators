@@ -170,6 +170,8 @@
     <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 10000; pointer-events: none;"></div>
 
     <script>
+        const currentUserRole = "{{ session.get('role') }}";
+
         // Global showToast function
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
@@ -239,16 +241,22 @@
         });
 
         globalSocket.on('new_student_leave', (data) => {
-            {% if session.get('role') == 'Teacher' %}
+            if (currentUserRole === 'Teacher') {
                 showToast(`New leave request from ${data.student_name} (${data.student_class})`, 'info');
                 // Optional: Play a subtle sound
-            {% endif %}
+            }
+        });
+
+        globalSocket.on('student_absence_alert', (data) => {
+            if (currentUserRole === 'Teacher') {
+                showToast(data.message, data.type || 'warning');
+            }
         });
 
         globalSocket.on('new_leave_submitted', (data) => {
-            {% if session.get('role') == 'Admin' %}
+            if (currentUserRole === 'Admin') {
                 showToast(`New ${data.role} leave request: ${data.name}`, 'info');
-            {% endif %}
+            }
         });
 
         // AI Chat Logic

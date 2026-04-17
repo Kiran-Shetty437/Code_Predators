@@ -66,6 +66,50 @@ def send_async_email(msg):
     with app.app_context():
         mail.send(msg)
 
+def sendWhatsAppMessage(to_number, message):
+    account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+    auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+    if not account_sid or not auth_token:
+        print("Twilio credentials not configured.")
+        return
+        
+    url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
+    
+    number = to_number.strip()
+    if not number.startswith('+'):
+        number = '+91' + number
+    
+    if not number.startswith('whatsapp:'):
+        number = f"whatsapp:{number}"
+
+    payload = {
+        'To': number,
+        'From': os.getenv('TWILIO_WHATSAPP_NUMBER', 'whatsapp:+14155238886'),
+        'Body': message
+    }
+    
+    try:
+        response = requests.post(
+            url,
+            data=payload,
+            auth=(account_sid, auth_token)
+        )
+        if response.status_code in [200, 201]:
+            print(f"WhatsApp message sent successfully to {number}.")
+        else:
+            print(f"Failed to send WhatsApp message. Status: {response.status_code}, Error: {response.text}")
+    except Exception as e:
+        print(f"Exception occurred while sending WhatsApp message: {e}")
+
+def notify_students_timetable_update(class_name, subject, day, period, teacher_name):
+    students = User.query.filter_by(role='Student', department=class_name).all()
+    if not students:
+        return
+    message = f"Timetable Update 📅\nClass: {class_name}\nSubject: {subject}\nDay: {day}\nPeriod: {period}\nTeacher: {teacher_name}"
+    for student in students:
+        if student.phone:
+            threading.Thread(target=sendWhatsAppMessage, args=(student.phone, message)).start()
+
 def is_absent_today(date_str):
     """
     Checks if today's date falls within the provided date_str.
@@ -460,12 +504,20 @@ def apply_leave():
         
         # Real-time notification for Mentors
         if session['role'] == 'Student':
-            student_class = user.department # 'department' field stores the class (e.g., IIBCA)
+            student_class = session.get('department') # 'department' field stores the class (e.g., IIBCA)
+            
+            # Get user roll no
+            user = User.query.get(session['user_id'])
+            
             socketio.emit('new_student_leave', {
                 'id': new_leave.id,
                 'student_name': session['name'],
+                'student_roll_no': user.roll_no,
                 'student_class': student_class,
-                'dates': dates
+                'dates': dates,
+                'reason': reason,
+                'document_path': filename,
+                'status': new_leave.status
             }, to=f"mentor_{student_class}")
         
         flash('Leave request submitted!', 'success')
@@ -475,6 +527,98 @@ def apply_leave():
         return render_template('teacher/apply_leave.html')
     else:
         return render_template('student/apply_leave.html')
+
+def get_weekdays_from_dates(dates_str):
+    from datetime import datetime, timedelta
+    weekdays = []
+    try:
+        if ' to ' in dates_str.lower():
+            start_str, end_str = dates_str.lower().split('to')
+            start_date = datetime.strptime(start_str.strip(), '%d-%m-%Y').date()
+            end_date = datetime.strptime(end_str.strip(), '%d-%m-%Y').date()
+            
+            delta = timedelta(days=1)
+            while start_date <= end_date:
+                weekdays.append((start_date.strftime('%A'), start_date.strftime('%d-%m-%Y')))
+                start_date += delta
+        else:
+            single_date = datetime.strptime(dates_str.strip(), '%d-%m-%Y').date()
+            weekdays.append((single_date.strftime('%A'), single_date.strftime('%d-%m-%Y')))
+    except Exception as e:
+        print(f"Error parsing dates for weekdays: {e}")
+    return weekdays
+
+def get_mentors_for_class(class_name):
+    """Returns list of (teacher_id, teacher_name) for mentors of a given class."""
+    mentors_path = os.path.join(app.root_path, 'mentors_data.json')
+    mentor_users = []
+    if not os.path.exists(mentors_path):
+        return mentor_users
+    try:
+        with open(mentors_path, 'r') as f:
+            mentors_data = json.load(f)
+        for item in mentors_data:
+            if item['class_name'] == class_name:
+                for mentor_key in ['mentor1', 'mentor2']:
+                    mentor_name = item.get(mentor_key)
+                    if mentor_name:
+                        mentor_user = User.query.filter_by(name=mentor_name, role='Teacher').first()
+                        if mentor_user:
+                            mentor_users.append((mentor_user.id, mentor_user.name))
+    except Exception as e:
+        print(f"Error loading mentors for notification: {e}")
+    return mentor_users
+
+def notify_teachers_for_student_absence(leave):
+    weekdays_and_dates = get_weekdays_from_dates(leave.dates)
+    if not weekdays_and_dates: return
+    
+    student_class = leave.user.department
+    mapping = get_class_subject_mapping()
+    class_subjects = mapping.get(student_class, [])
+    
+    # --- TIER 1: Always notify Class Mentors ---
+    mentor_ids_notified = set()
+    mentors = get_mentors_for_class(student_class)
+    for mentor_id, mentor_name in mentors:
+        mentor_ids_notified.add(mentor_id)
+        msg = f"FYI: Your mentee {leave.user.name} ({student_class}) has an approved leave on {leave.dates}."
+        socketio.emit('student_absence_alert', {
+            'message': msg,
+            'type': 'info'
+        }, to=f"user_{mentor_id}")
+        print(f"[Absence] Mentor notified: {mentor_name} (id={mentor_id}) for student {leave.user.name}")
+    
+    if not class_subjects:
+        print(f"[Absence] No class_subjects found for class '{student_class}', skipping timetable check.")
+        return
+    
+    # --- TIER 2: Notify Subject Teachers from Timetable ---
+    for day_name, date_str in weekdays_and_dates:
+        timetable_records = TeacherTimetable.query.filter(
+            TeacherTimetable.day == day_name,
+            TeacherTimetable.subject.in_(class_subjects)
+        ).all()
+        
+        print(f"[Absence] Timetable check for {student_class} on {day_name} ({date_str}): {len(timetable_records)} record(s).")
+        
+        teacher_notifications = {}
+        for record in timetable_records:
+            if record.teacher_id not in teacher_notifications:
+                teacher_notifications[record.teacher_id] = []
+            if record.subject not in teacher_notifications[record.teacher_id]:
+                teacher_notifications[record.teacher_id].append(record.subject)
+            
+        for teacher_id, subjects in teacher_notifications.items():
+            # Skip if mentor was already notified with the general message
+            subjects_str = ", ".join(subjects)
+            msg = f"Alert: {leave.user.name} ({student_class}) will be absent on {date_str}. They will miss your {subjects_str} class(es)."
+            
+            socketio.emit('student_absence_alert', {
+                'message': msg,
+                'type': 'warning'
+            }, to=f"user_{teacher_id}")
+            print(f"[Absence] Subject teacher notified: id={teacher_id}, subjects={subjects_str}")
 
 @app.route('/update_leave/<int:leave_id>/<string:status>')
 def update_leave(leave_id, status):
@@ -510,6 +654,16 @@ def update_leave(leave_id, status):
         # Notify Parent if Student
         if leave.role == 'Student' and leave.user.parent_email:
             send_parent_notification(leave.user.parent_email, leave.user.name, leave.dates)
+            
+        # Notify Teachers about Student Absence
+        if leave.role == 'Student':
+            notify_teachers_for_student_absence(leave)
+            
+    # Send WhatsApp Notification for Approved or Rejected Leave to Student
+    if leave.role == 'Student' and status in ['Approved', 'Rejected']:
+        if leave.user.phone:
+            wa_message = f"Leave Update 📅\nYour leave request for {leave.dates} has been {status}."
+            threading.Thread(target=sendWhatsAppMessage, args=(leave.user.phone, wa_message)).start()
         
     flash(f'Leave updated to {status} successfully!', 'info')
     
@@ -517,10 +671,17 @@ def update_leave(leave_id, status):
     update_data = {
         'id': leave_id,
         'status': status,
-        'message': f"Leave request for {leave.user.name} has been {status}."
+        'message': f"Leave request for {leave.user.name} has been {status}.",
+        'user_id': leave.user_id,
+        'role': leave.role
     }
     socketio.emit('leave_status_changed', update_data, to=f"user_{leave.user_id}")
     socketio.emit('leave_status_changed', update_data, to='admin_room')
+    
+    # Send status change to mentors if it's a student
+    if leave.role == 'Student':
+        student_class = leave.user.department
+        socketio.emit('leave_status_changed', update_data, to=f"mentor_{student_class}")
     
     return redirect(request.referrer)
 
@@ -635,6 +796,11 @@ def save_timetable():
             db.session.delete(record)
             
     db.session.commit()
+
+    # Trigger WhatsApp notification for timetable update
+    if subject and class_name:
+        teacher_name = session.get('name')
+        notify_students_timetable_update(class_name, official_subject, day, period, teacher_name)
     return jsonify({'success': True, 'class_name': class_name})
 
 @app.route('/student/timetable')

@@ -59,8 +59,8 @@
                 </td>
             </tr>
             {% else %}
-            <tr>
-                <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+            <tr id="no-leaves-row">
+                <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);">
                     No student leave requests found.
                 </td>
             </tr>
@@ -68,4 +68,81 @@
         </tbody>
     </table>
 </div>
+
+<style>
+    @keyframes highlight {
+        from { background: #eff6ff; }
+        to { background: transparent; }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const socket = io();
+
+    socket.on('new_student_leave', (data) => {
+        // Remove 'No requests' row if it exists
+        const noLeavesRow = document.getElementById('no-leaves-row');
+        if (noLeavesRow) noLeavesRow.remove();
+
+        const tbody = document.querySelector('tbody');
+        const newRow = document.createElement('tr');
+        newRow.id = `leave-row-${data.id}`;
+        newRow.style.animation = 'highlight 2s ease';
+        
+        let docLink = '<span style="color: #cbd5e1; font-size: 0.75rem;">None</span>';
+        if (data.document_path) {
+            docLink = `<a href="/static/uploads/${data.document_path}" target="_blank" class="btn" style="padding: 0.2rem 0.4rem; background: #f1f5f9; color: var(--primary);">
+                <i class="fas fa-file-alt"></i> View
+            </a>`;
+        }
+
+        newRow.innerHTML = `
+            <td style="font-weight: 600;">${data.student_name}</td>
+            <td><code style="background: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 4px;">${data.student_roll_no}</code></td>
+            <td>${data.dates}</td>
+            <td style="max-width: 300px;">${data.reason}</td>
+            <td>${docLink}</td>
+            <td id="status-cell-${data.id}">
+                <span class="badge badge-${data.status.toLowerCase()}">${data.status}</span>
+            </td>
+            <td id="actions-cell-${data.id}">
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <a href="/update_leave/${data.id}/Approved" class="btn btn-success" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+                        <i class="fas fa-check"></i> Approve
+                    </a>
+                    <a href="/update_leave/${data.id}/Rejected" class="btn btn-danger" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+                        <i class="fas fa-times"></i> Reject
+                    </a>
+                    <a href="/update_leave/${data.id}/Forwarded to Admin" class="btn" style="padding: 0.4rem 0.6rem; font-size: 0.75rem; background: var(--secondary); color: white;">
+                        <i class="fas fa-share"></i> Forward to Admin
+                    </a>
+                </div>
+            </td>
+        `;
+        tbody.prepend(newRow);
+        
+        // Visual notification is handled in base.html
+    });
+
+    socket.on('leave_status_changed', (data) => {
+        const cell = document.getElementById(`status-cell-${data.id}`);
+        if (cell) {
+            const badgeClass = data.status.includes('Forwarded') ? 'badge-forwarded' : `badge-${data.status.toLowerCase()}`;
+            cell.innerHTML = `<span class="badge ${badgeClass}">${data.status}</span>`;
+            
+            const actionCell = document.getElementById(`actions-cell-${data.id}`);
+            if (actionCell) {
+                if (data.status === 'Pending') {
+                   // Keep the actions
+                } else if (data.status === 'Forwarded to Admin') {
+                    actionCell.innerHTML = '<span style="color: var(--primary); font-size: 0.75rem; font-weight: 600;">Awaiting Admin Action</span>';
+                } else {
+                    actionCell.innerHTML = '<span style="color: var(--text-muted); font-size: 0.75rem;">Processed</span>';
+                }
+            }
+        }
+    });
+</script>
 {% endblock %}

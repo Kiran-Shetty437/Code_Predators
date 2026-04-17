@@ -19,7 +19,7 @@
         </div>
         <div class="stat-info">
             <h3>Pending Student Requests</h3>
-            <p>{{ pending_student_leaves }}</p>
+            <p id="pending-student-leaves">{{ pending_student_leaves }}</p>
         </div>
     </div>
     <div class="stat-card">
@@ -29,9 +29,9 @@
         <div class="stat-info">
             <h3>My Leave Status</h3>
             {% if my_leaves %}
-                <p style="font-size: 1rem; color: var(--primary);">{{ my_leaves[-1].status }}</p>
+                <p id="my-latest-leave-status" style="font-size: 1rem; color: var(--primary);">{{ my_leaves[-1].status }}</p>
             {% else %}
-                <p style="font-size: 1rem; color: var(--text-muted);">No requests</p>
+                <p id="my-latest-leave-status" style="font-size: 1rem; color: var(--text-muted);">No requests</p>
             {% endif %}
         </div>
     </div>
@@ -48,15 +48,15 @@
                     <th>Status</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="my-leaves-tbody">
                 {% for leave in my_leaves[::-1] %}
-                <tr>
+                <tr id="my-leave-row-{{ leave.id }}">
                     <td>{{ leave.dates }}</td>
                     <td>{{ leave.reason }}</td>
-                    <td><span class="badge badge-{{ leave.status.lower() }}">{{ leave.status }}</span></td>
+                    <td id="my-leave-status-{{ leave.id }}"><span class="badge badge-{{ leave.status.lower() }}">{{ leave.status }}</span></td>
                 </tr>
                 {% else %}
-                <tr>
+                <tr id="no-my-leaves-row">
                     <td colspan="3" style="text-align: center; color: var(--text-muted);">You haven't applied for any leaves yet.</td>
                 </tr>
                 {% endfor %}
@@ -69,4 +69,42 @@
         </a>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const socket = io();
+
+    socket.on('new_student_leave', (data) => {
+        const countSpan = document.getElementById('pending-student-leaves');
+        if (countSpan) {
+            countSpan.innerText = parseInt(countSpan.innerText) + 1;
+        }
+    });
+
+    socket.on('leave_status_changed', (data) => {
+        const currentUserId = "{{ session.get('user_id') }}";
+        
+        // If the teacher's own leave was updated
+        if (data.user_id && currentUserId && data.user_id.toString() === currentUserId.toString()) {
+            const statusText = document.getElementById('my-latest-leave-status');
+            if (statusText) {
+                statusText.innerText = data.status;
+                statusText.style.color = "var(--primary)";
+            }
+            const statusCell = document.getElementById(`my-leave-status-${data.id}`);
+            if (statusCell) {
+                const badgeClass = `badge-${data.status.toLowerCase()}`;
+                statusCell.innerHTML = `<span class="badge ${badgeClass}">${data.status}</span>`;
+            }
+        } 
+        // If it was a student leave updated (they were the mentor approving/rejecting it)
+        else if (data.role === 'Student' && data.status !== 'Pending') {
+            const countSpan = document.getElementById('pending-student-leaves');
+            if (countSpan && parseInt(countSpan.innerText) > 0) {
+                countSpan.innerText = parseInt(countSpan.innerText) - 1;
+            }
+        }
+    });
+</script>
 {% endblock %}

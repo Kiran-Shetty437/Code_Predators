@@ -29,7 +29,7 @@
         </div>
         <div class="stat-info">
             <h3>Pending Actions</h3>
-            <p>{{ pending_leaves }}</p>
+            <p id="pending-actions-count">{{ pending_leaves }}</p>
         </div>
     </div>
 </div>
@@ -67,5 +67,27 @@
     }
     setInterval(updateClock, 1000);
     updateClock();
+
+    const socket = io();
+    socket.on('new_leave_submitted', (data) => {
+        const countSpan = document.getElementById('pending-actions-count');
+        if (countSpan) {
+            countSpan.innerText = parseInt(countSpan.innerText) + 1;
+        }
+    });
+
+    socket.on('leave_status_changed', (data) => {
+        // If status changed to something else but 'Forwarded to Admin' (which makes it a pending action)
+        const countSpan = document.getElementById('pending-actions-count');
+        if (countSpan) {
+            if (data.status === 'Approved' || data.status === 'Rejected') {
+                 if (parseInt(countSpan.innerText) > 0) {
+                     countSpan.innerText = parseInt(countSpan.innerText) - 1;
+                 }
+            } else if (data.status === 'Forwarded to Admin') {
+                 countSpan.innerText = parseInt(countSpan.innerText) + 1;
+            }
+        }
+    });
 </script>
 {% endblock %}
