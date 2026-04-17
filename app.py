@@ -181,6 +181,11 @@ def dashboard():
     role = session['role']
     user = User.query.get(session['user_id'])
     
+    # Refresh session data from DB to ensure it's not None
+    if user:
+        session['department'] = user.department
+        session['name'] = user.name
+    
     if role == 'Admin':
         teacher_count = User.query.filter_by(role='Teacher').count()
         student_count = User.query.filter_by(role='Student').count()
