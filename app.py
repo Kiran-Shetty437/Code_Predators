@@ -197,7 +197,25 @@ def dashboard():
         return render_template('admin/dashboard.html', teacher_count=teacher_count, student_count=student_count, pending_leaves=pending_leaves)
     
     elif role == 'Teacher':
-        pending_student_leaves = LeaveRequest.query.filter_by(status='Pending', role='Student').count()
+        # Find mentored classes for this teacher
+        current_teacher_name = session.get('name')
+        mentored_classes = []
+        try:
+            mentors_path = os.path.join(app.root_path, 'mentors_data.json')
+            if os.path.exists(mentors_path):
+                with open(mentors_path, 'r') as f:
+                    mentors_data = json.load(f)
+                for item in mentors_data:
+                    if item['mentor1'] == current_teacher_name or item['mentor2'] == current_teacher_name:
+                        mentored_classes.append(item['class_name'])
+        except Exception as e:
+            print(f"Error loading mentors in dashboard: {e}")
+
+        # Filter count for mentored classes only
+        pending_student_leaves = LeaveRequest.query.join(User, LeaveRequest.user_id == User.id)\
+                                .filter(LeaveRequest.status == 'Pending', LeaveRequest.role == 'Student')\
+                                .filter(User.department.in_(mentored_classes)).count() if mentored_classes else 0
+                                
         my_leaves = LeaveRequest.query.filter_by(user_id=session['user_id']).all()
         return render_template('teacher/dashboard.html', pending_student_leaves=pending_student_leaves, my_leaves=my_leaves)
     
@@ -218,6 +236,22 @@ def handle_connect():
     if 'user_id' in session:
         if session['role'] == 'Admin':
             join_room('admin_room')
+        elif session['role'] == 'Teacher':
+            # Join room for individual notifications
+            join_room(f"user_{session['user_id']}")
+            # Join rooms for mentored classes
+            current_teacher_name = session.get('name')
+            try:
+                mentors_path = os.path.join(app.root_path, 'mentors_data.json')
+                if os.path.exists(mentors_path):
+                    with open(mentors_path, 'r') as f:
+                        mentors_data = json.load(f)
+                    for item in mentors_data:
+                        if item['mentor1'] == current_teacher_name or item['mentor2'] == current_teacher_name:
+                            join_room(f"mentor_{item['class_name']}")
+                            print(f"Teacher {current_teacher_name} joined room: mentor_{item['class_name']}")
+            except Exception as e:
+                print(f"Error joining mentor rooms: {e}")
         else:
             join_room(f"user_{session['user_id']}")
     print(f"Client connected: {request.sid}")
@@ -380,6 +414,16 @@ def apply_leave():
             'reason': reason,
             'status': new_leave.status
         }, to='admin_room')
+        
+        # Real-time notification for Mentors
+        if session['role'] == 'Student':
+            student_class = user.department # 'department' field stores the class (e.g., IIBCA)
+            socketio.emit('new_student_leave', {
+                'id': new_leave.id,
+                'student_name': session['name'],
+                'student_class': student_class,
+                'dates': dates
+            }, to=f"mentor_{student_class}")
         
         flash('Leave request submitted!', 'success')
         return redirect(url_for('dashboard'))
