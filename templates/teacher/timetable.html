@@ -10,10 +10,10 @@
             <tr>
                 <th>Day / Period</th>
                 {% for p in periods %}
-                    {% if p == 5 %}
-                        <th class="lunch-header" style="min-width: 40px;">Lunch</th>
-                    {% endif %}
-                    <th>Period {{ p }}</th>
+                {% if p == 5 %}
+                <th class="lunch-header" style="min-width: 40px;">Lunch</th>
+                {% endif %}
+                <th>Period {{ p }}</th>
                 {% endfor %}
             </tr>
         </thead>
@@ -22,19 +22,20 @@
             <tr style="height: 80px;">
                 <td class="day-cell">{{ day }}</td>
                 {% for p in periods %}
-                    {% if p == 5 %}
-                        <td class="lunch-break">BREAK</td>
-                    {% endif %}
-                    <td class="timetable-td" onclick="openEditModal('{{ day }}', {{ p }}, '{{ timetable_data.get(day, {}).get(p, '') }}')">
-                        <div class="timetable-cell editable">
-                            {% if timetable_data.get(day, {}).get(p) %}
-                                <span class="subject-name">{{ timetable_data[day][p] }}</span>
-                                <span class="class-name" id="class-{{ day }}-{{ p }}">Loading...</span>
-                            {% else %}
-                                <span class="empty-text">---</span>
-                            {% endif %}
-                        </div>
-                    </td>
+                {% if p == 5 %}
+                <td class="lunch-break">BREAK</td>
+                {% endif %}
+                <td class="timetable-td" data-day="{{ day }}" data-period="{{ p }}"
+                    data-subject="{{ timetable_data.get(day, {}).get(p, '') }}" onclick="makeEditable(this)">
+                    <div class="timetable-cell editable">
+                        {% if timetable_data.get(day, {}).get(p) %}
+                        <span class="subject-name">{{ timetable_data[day][p] }}</span>
+                        <span class="class-name" id="class-{{ day }}-{{ p }}">Loading...</span>
+                        {% else %}
+                        <span class="empty-text">---</span>
+                        {% endif %}
+                    </div>
+                </td>
                 {% endfor %}
             </tr>
             {% endfor %}
@@ -42,126 +43,182 @@
     </table>
 </div>
 
-<!-- Edit Modal -->
-<div id="editModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 id="modalTitle">Edit Period</h3>
-            <span class="close-modal" onclick="closeModal()">&times;</span>
-        </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label for="subjectInput">Enter Subject Name</label>
-                <input type="text" id="subjectInput" class="form-control" list="subjectList" placeholder="e.g. Java, DBMS..." autocomplete="off">
-                <datalist id="subjectList">
-                    {% for subject in all_subjects %}
-                    <option value="{{ subject }}">
-                    {% endfor %}
-                </datalist>
-                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
-                    Tip: Enter a valid subject from the curriculum to auto-assign the class.
-                </p>
-            </div>
-            <div id="modalError" class="alert alert-danger" style="display: none; padding: 0.75rem; font-size: 0.8rem; margin-top: 1rem;"></div>
-        </div>
-        <div class="timetable-actions" style="padding: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem; border-top: 1px solid var(--border);">
-            <button class="btn" style="background: #e2e8f0;" onclick="closeModal()">Cancel</button>
-            <button class="btn btn-primary" onclick="saveCell()" id="saveBtn">Save Changes</button>
-        </div>
-    </div>
-</div>
+<datalist id="subjectList">
+    {% for subject in all_subjects %}
+    <option value="{{ subject }}">
+        {% endfor %}
+</datalist>
+
+<!-- Store mapping cleanly in HTML to avoid JS syntax errors from Jinja injection -->
+<meta id="class-mapping-data" data-mapping="{{ class_mapping | tojson | forceescape }}">
 
 <script>
-let currentDay = '';
-let currentPeriod = 0;
+    const mappingMeta = document.getElementById('class-mapping-data');
+    const classMapping = mappingMeta && mappingMeta.dataset.mapping ? JSON.parse(mappingMeta.dataset.mapping) : {};
 
-const classMapping = {{ class_mapping | tojson }};
-
-function getClassFromSubject(subject) {
-    if (!subject) return '';
-    const searchSub = subject.trim().toLowerCase();
-    for (const [className, subjects] of Object.entries(classMapping)) {
-        if (subjects.some(s => s.trim().toLowerCase() === searchSub)) return className;
+    function getClassFromSubject(subject) {
+        if (!subject) return '';
+        const searchSub = subject.trim().toLowerCase();
+        for (const [className, subjects] of Object.entries(classMapping)) {
+            if (subjects.some(s => s.trim().toLowerCase() === searchSub)) return className;
+        }
+        return '';
     }
-    return '';
-}
 
-function openEditModal(day, period, subject) {
-    console.log(`Opening modal for ${day}, Period ${period}, Subject: ${subject}`);
-    currentDay = day;
-    currentPeriod = period;
-    document.getElementById('modalTitle').innerText = `Edit: ${day} - Period ${period}`;
-    document.getElementById('subjectInput').value = subject;
-    document.getElementById('editModal').style.display = 'block';
-    document.getElementById('modalError').style.display = 'none';
-    document.getElementById('subjectInput').focus();
-}
+    async function saveCell(day, period, subject, cellElement) {
+        try {
+            const response = await fetch('/api/save_timetable', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ day, period, subject })
+            });
 
-function closeModal() {
-    document.getElementById('editModal').style.display = 'none';
-}
+            const result = await response.json();
 
-async function saveCell() {
-    const subject = document.getElementById('subjectInput').value.trim();
-    const errorDiv = document.getElementById('modalError');
-    const saveBtn = document.getElementById('saveBtn');
-    
-    errorDiv.style.display = 'none';
-    saveBtn.disabled = true;
-    saveBtn.innerText = 'Saving...';
+            if (!result.success) {
+                alert("Error saving: " + result.message);
+                window.location.reload();
+                return false;
+            }
 
-    console.log("Saving cell data:", { day: currentDay, period: currentPeriod, subject: subject });
+            cellElement.dataset.subject = subject;
+            return true;
+        } catch (e) {
+            console.error("Save error:", e);
+            alert("Connection error while saving.");
+            return false;
+        }
+    }
 
-    try {
-        const response = await fetch('/api/save_timetable', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                day: currentDay,
-                period: currentPeriod,
-                subject: subject
-            })
+    function restoreCellHTML(cell, subject) {
+        let content = '';
+        if (subject && subject.trim() !== '') {
+            const clsName = getClassFromSubject(subject);
+            content = `<div class="timetable-cell editable">
+                <span class="subject-name">${subject}</span>
+                <span class="class-name">${clsName || 'Class not found'}</span>
+            </div>`;
+        } else {
+            content = `<div class="timetable-cell editable"><span class="empty-text">---</span></div>`;
+        }
+        cell.innerHTML = content;
+    }
+
+    function makeEditable(cell) {
+        if (cell.querySelector('input')) return;
+
+        const day = cell.dataset.day;
+        const period = cell.dataset.period;
+        const currentSubject = cell.dataset.subject || '';
+
+        const inputArea = document.createElement('div');
+        inputArea.style.display = 'flex';
+        inputArea.style.alignItems = 'center';
+        inputArea.style.gap = '5px';
+        inputArea.style.width = '100%';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentSubject;
+        input.setAttribute('list', 'subjectList');
+        input.className = 'form-control';
+        input.style.width = '100%';
+        input.style.minWidth = '100px';
+        input.style.padding = '0.3rem';
+
+        const clearBtn = document.createElement('button');
+        clearBtn.innerHTML = '&times;';
+        clearBtn.title = 'Clear Slot';
+        clearBtn.style.background = 'none';
+        clearBtn.style.border = 'none';
+        clearBtn.style.color = '#e53e3e';
+        clearBtn.style.cursor = 'pointer';
+        clearBtn.style.fontSize = '1.2rem';
+        clearBtn.style.padding = '0';
+        clearBtn.style.lineHeight = '1';
+
+        inputArea.appendChild(input);
+        inputArea.appendChild(clearBtn);
+
+        cell.innerHTML = '';
+        cell.appendChild(inputArea);
+
+        input.focus();
+        input.selectionStart = input.selectionEnd = input.value.length;
+
+        let isSaving = false;
+
+        async function handleSave() {
+            if (isSaving) return;
+            isSaving = true;
+            const newSub = input.value.trim();
+            if (newSub !== currentSubject) {
+                const success = await saveCell(day, period, newSub, cell);
+                if (success) {
+                    restoreCellHTML(cell, newSub);
+                } else {
+                    restoreCellHTML(cell, currentSubject);
+                }
+            } else {
+                restoreCellHTML(cell, currentSubject);
+            }
+        }
+
+        input.addEventListener('keydown', async function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                input.blur();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                isSaving = true;
+                restoreCellHTML(cell, currentSubject);
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                await handleSave();
+                openNextPeriod(cell);
+            }
         });
 
-        const result = await response.json();
-        console.log("Server response:", result);
+        input.addEventListener('blur', function () {
+            setTimeout(async () => {
+                if (!isSaving) await handleSave();
+            }, 150);
+        });
 
-        if (result.success) {
-            window.location.reload(); 
-        } else {
-            errorDiv.innerText = result.message;
-            errorDiv.style.display = 'block';
-            saveBtn.disabled = false;
-            saveBtn.innerText = 'Save Changes';
+        clearBtn.addEventListener('mousedown', async function (e) {
+            e.preventDefault();
+            input.value = '';
+            await handleSave();
+        });
+    }
+
+    function openNextPeriod(currentCell) {
+        let nextCell = currentCell.nextElementSibling;
+        if (nextCell && nextCell.classList.contains('lunch-break')) {
+            nextCell = nextCell.nextElementSibling;
         }
-    } catch (e) {
-        console.error("Save error:", e);
-        errorDiv.innerText = "Connection error. Please try again.";
-        errorDiv.style.display = 'block';
-        saveBtn.disabled = false;
-        saveBtn.innerText = 'Save Changes';
+        if (nextCell && nextCell.classList.contains('timetable-td')) {
+            makeEditable(nextCell);
+        } else {
+            let nextRow = currentCell.parentElement.nextElementSibling;
+            if (nextRow) {
+                let cols = nextRow.querySelectorAll('.timetable-td');
+                if (cols.length > 0) makeEditable(cols[0]);
+            }
+        }
     }
-}
 
-// Close modal if clicked outside
-window.onclick = function(event) {
-    if (event.target == document.getElementById('editModal')) {
-        closeModal();
-    }
-}
-
-// Initialize class names for existing subjects
-document.addEventListener('DOMContentLoaded', () => {
-    {% for day in days %}
-        {% for p in periods %}
-            {% if timetable_data.get(day, {}).get(p) %}
-                (function() {
-                    const el = document.getElementById('class-{{ day }}-{{ p }}');
-                    if (el) el.innerText = getClassFromSubject("{{ timetable_data[day][p] }}");
-                })();
-            {% endif %}
-        {% endfor %}
-    {% endfor %}
-});
+    document.addEventListener('DOMContentLoaded', () => {
+        // Find all timetable cells and automatically assign the correct class from the mapping
+        document.querySelectorAll('.timetable-td').forEach(cell => {
+            const subject = cell.dataset.subject;
+            if (subject) {
+                const classSpan = cell.querySelector('.class-name');
+                if (classSpan) {
+                    classSpan.innerText = getClassFromSubject(subject);
+                }
+            }
+        });
+    });
 </script>
 {% endblock %}
