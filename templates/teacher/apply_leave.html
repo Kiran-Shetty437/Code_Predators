@@ -11,6 +11,11 @@
             <input type="text" name="dates" id="dates" class="form-control" placeholder="DD-MM-YYYY or DD-MM-YYYY to DD-MM-YYYY" required>
             <small style="color: var(--text-muted);">Format: 01-05-2024 or 01-05-2024 to 03-05-2024</small>
         </div>
+        <div class="form-group" id="timeGroup">
+            <label for="start_time">Requested Leave Start Time (for short/half-day leave)</label>
+            <input type="time" name="start_time" id="start_time" class="form-control">
+            <small style="color: var(--text-muted);">Note: For same-day leave, you must apply at least 1 hour in advance.</small>
+        </div>
         <div class="form-group">
             <label for="reason">Reason for Leave</label>
             <textarea name="reason" id="reason" class="form-control" rows="5" placeholder="Explain your reason clearly..." required></textarea>

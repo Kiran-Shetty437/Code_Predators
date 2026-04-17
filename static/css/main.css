@@ -639,6 +639,7 @@ td {
     border-radius: inherit;
     pointer-events: none;
 }
+}
 
 .timetable {
     width: 100%;
@@ -665,12 +666,12 @@ td {
     width: 150px;
     border-radius: 12px;
 }
+}
 
 .timetable td {
     padding: 0;
-    border-top: none;
-    text-align: center;
-    vertical-align: middle;
+    border: 1px solid #f1f5f9;
+    transition: all 0.2s;
 }
 
 .timetable-cell {
@@ -683,7 +684,6 @@ td {
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    align-items: center;
     justify-content: center;
     gap: 4px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.02);
@@ -747,6 +747,80 @@ td {
     height: 100%;
     background-color: rgba(15, 23, 42, 0.2);
     backdrop-filter: blur(8px);
+}
+
+/* Responsive Grid for Mobile */
+@media (max-width: 992px) {
+    .timetable-container {
+        padding: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+    
+    .timetable {
+        display: block;
+        min-width: 100%;
+    }
+    
+    .timetable thead {
+        display: none;
+    }
+    
+    .timetable tbody {
+        display: block;
+    }
+    
+    .timetable tr {
+        display: block;
+        margin-bottom: 2rem;
+        background: var(--white);
+        border-radius: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+    }
+    
+    .timetable .day-cell {
+        display: block;
+        width: 100%;
+        background: var(--primary);
+        color: white;
+        text-align: left;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+        border: none;
+    }
+    
+    .timetable td {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        border: none;
+        border-bottom: 1px solid #f1f5f9;
+        text-align: left;
+    }
+    
+    .timetable td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        min-width: 80px;
+        text-align: left;
+    }
+    
+    .timetable-cell {
+        flex: 1;
+        align-items: flex-start;
+        text-align: left;
+        min-height: auto;
+        padding: 0.75rem 1rem;
+    }
+    
+    .lunch-break {
+        display: none !important;
+    }
 }
 
 .modal-content {

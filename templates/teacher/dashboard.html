@@ -52,7 +52,10 @@
             <tbody>
                 {% for leave in my_leaves[::-1] %}
                 <tr>
-                    <td>{{ leave.dates }}</td>
+                    <td>
+                        {{ leave.dates }}
+                        {% if leave.start_time %}<br><small style="color: var(--primary); font-weight: 600;">Starts: {{ leave.start_time }}</small>{% endif %}
+                    </td>
                     <td>{{ leave.reason }}</td>
                     <td><span class="badge badge-{{ leave.status.lower() }}">{{ leave.status }}</span></td>
                     <td style="max-width: 200px; font-size: 0.85rem; color: var(--text-muted);">

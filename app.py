@@ -96,6 +96,7 @@ class LeaveRequest(db.Model):
     role = db.Column(db.String(20), nullable=False)
     reason = db.Column(db.Text, nullable=False)
     dates = db.Column(db.String(100), nullable=False)
+    start_time = db.Column(db.String(20)) # Added for same-day time checks
     document_path = db.Column(db.String(200)) # Path to uploaded file
     status = db.Column(db.String(20), default='Pending') # Pending, Approved, Rejected
     remark = db.Column(db.Text, nullable=True) # Comment/Remark by Admin or Teacher
@@ -197,11 +198,32 @@ def dashboard():
     if role == 'Admin':
         teacher_count = User.query.filter_by(role='Teacher').count()
         student_count = User.query.filter_by(role='Student').count()
-        pending_leaves = LeaveRequest.query.filter_by(status='Pending', role='Teacher').count()
+        pending_leaves = LeaveRequest.query.filter(
+            ((LeaveRequest.role == 'Teacher') & (LeaveRequest.status == 'Pending')) |
+            (LeaveRequest.status == 'Forwarded to Admin')
+        ).count()
         return render_template('admin/dashboard.html', teacher_count=teacher_count, student_count=student_count, pending_leaves=pending_leaves)
     
     elif role == 'Teacher':
-        pending_student_leaves = LeaveRequest.query.filter_by(status='Pending', role='Student').count()
+        # Find mentored classes for this teacher
+        current_teacher_name = session.get('name')
+        mentored_classes = []
+        try:
+            mentors_path = os.path.join(app.root_path, 'mentors_data.json')
+            if os.path.exists(mentors_path):
+                with open(mentors_path, 'r') as f:
+                    mentors_data = json.load(f)
+                for item in mentors_data:
+                    if item['mentor1'] == current_teacher_name or item['mentor2'] == current_teacher_name:
+                        mentored_classes.append(item['class_name'])
+        except Exception as e:
+            print(f"Error loading mentors in dashboard: {e}")
+
+        # Filter count for mentored classes only
+        pending_student_leaves = LeaveRequest.query.join(User, LeaveRequest.user_id == User.id)\
+                                .filter(LeaveRequest.status == 'Pending', LeaveRequest.role == 'Student')\
+                                .filter(User.department.in_(mentored_classes)).count() if mentored_classes else 0
+                                
         my_leaves = LeaveRequest.query.filter_by(user_id=session['user_id']).all()
         return render_template('teacher/dashboard.html', pending_student_leaves=pending_student_leaves, my_leaves=my_leaves)
     
@@ -222,6 +244,22 @@ def handle_connect():
     if 'user_id' in session:
         if session['role'] == 'Admin':
             join_room('admin_room')
+        elif session['role'] == 'Teacher':
+            # Join room for individual notifications
+            join_room(f"user_{session['user_id']}")
+            # Join rooms for mentored classes
+            current_teacher_name = session.get('name')
+            try:
+                mentors_path = os.path.join(app.root_path, 'mentors_data.json')
+                if os.path.exists(mentors_path):
+                    with open(mentors_path, 'r') as f:
+                        mentors_data = json.load(f)
+                    for item in mentors_data:
+                        if item['mentor1'] == current_teacher_name or item['mentor2'] == current_teacher_name:
+                            join_room(f"mentor_{item['class_name']}")
+                            print(f"Teacher {current_teacher_name} joined room: mentor_{item['class_name']}")
+            except Exception as e:
+                print(f"Error joining mentor rooms: {e}")
         else:
             join_room(f"user_{session['user_id']}")
     print(f"Client connected: {request.sid}")
@@ -242,11 +280,11 @@ def manage_students():
 @app.route('/admin/leaves')
 def view_all_leaves():
     if session.get('role') != 'Admin': return redirect(url_for('login'))
-    # Admin views: 1. All Teacher leaves, 2. Student leaves forwarded to Admin
+    # Admin views: All Teacher leaves and ONLY Forwarded Student leaves (for action)
     leaves = LeaveRequest.query.filter(
         (LeaveRequest.role == 'Teacher') | 
         (LeaveRequest.status == 'Forwarded to Admin')
-    ).all()
+    ).order_by(LeaveRequest.created_at.desc()).all()
     return render_template('admin/leaves.html', leaves=leaves)
 
 @app.route('/admin/absentees')
@@ -260,19 +298,41 @@ def view_absentees():
     absent_students = {}
     
     for leave in approved_leaves:
-        if is_absent_today(leave.dates):
-            if leave.role == 'Teacher':
-                dept = leave.user.department
-                if dept not in absent_teachers: absent_teachers[dept] = []
-                absent_teachers[dept].append(leave.user)
-            else:
-                cls = leave.user.department # department field stores Class for students
-                if cls not in absent_students: absent_students[cls] = []
-                absent_students[cls].append(leave.user)
+        if leave.role == 'Teacher':
+            dept = leave.user.department
+            if dept not in absent_teachers: absent_teachers[dept] = []
+            absent_teachers[dept].append(leave)
+        else:
+            cls = leave.user.department # department field stores Class for students
+            if cls not in absent_students: absent_students[cls] = []
+            absent_students[cls].append(leave)
                 
     return render_template('admin/absentees.html', 
                             absent_teachers=absent_teachers, 
                             absent_students=absent_students)
+
+@app.route('/admin/reports')
+def leave_reports():
+    if session.get('role') != 'Admin': return redirect(url_for('login'))
+    
+    all_leaves = LeaveRequest.query.order_by(LeaveRequest.created_at.desc()).all()
+    
+    report_teachers = {}
+    report_students = {}
+    
+    for leave in all_leaves:
+        if leave.role == 'Teacher':
+            dept = leave.user.department or 'Unknown'
+            if dept not in report_teachers: report_teachers[dept] = []
+            report_teachers[dept].append(leave)
+        else:
+            cls = leave.user.department or 'Unknown'
+            if cls not in report_students: report_students[cls] = []
+            report_students[cls].append(leave)
+            
+    return render_template('admin/reports.html', 
+                            report_teachers=report_teachers, 
+                            report_students=report_students)
 
 @app.route('/admin/delete_user/<int:user_id>')
 def delete_user(user_id):
@@ -324,6 +384,7 @@ def apply_leave():
     if request.method == 'POST':
         reason = request.form.get('reason')
         dates = request.form.get('dates')
+        start_time_val = request.form.get('start_time') # Optional time field
         file = request.files.get('document')
         
         # Date Validation: Pattern and Past Dates
@@ -349,13 +410,34 @@ def apply_leave():
                 flash(f'Cannot apply for past dates! Today is {today.strftime("%d-%m-%Y")}.', 'warning')
                 return redirect(request.referrer)
             
-            # 9 AM Cutoff Logic for Today's Leave (Students only)
-            if session.get('role') == 'Student' and requested_start == today:
-                now_time = datetime.now().time()
-                cutoff_time = datetime.strptime("09:00:00", "%H:%M:%S").time()
-                if now_time >= cutoff_time:
-                    flash('Same-day leave must be applied before 9:00 AM!', 'danger')
-                    return redirect(request.referrer)
+            # Same-Day Leave Rules
+            if requested_start == today:
+                now_dt = datetime.now()
+                now_time = now_dt.time()
+                
+                # 1. Student Rule: Before 9:00 AM
+                if session.get('role') == 'Student':
+                    cutoff_time = datetime.strptime("09:00:00", "%H:%M:%S").time()
+                    if now_time >= cutoff_time:
+                        flash('Same-day student leave must be applied before 9:00 AM!', 'danger')
+                        return redirect(request.referrer)
+                
+                # 2. Teacher Rule: 1-hour Gap Rule
+                elif session.get('role') == 'Teacher' and start_time_val:
+                    try:
+                        # Parse user's requested leave time (e.g. "12:00")
+                        leave_dt = datetime.strptime(f"{today.strftime('%d-%m-%Y')} {start_time_val}", "%d-%m-%Y %H:%M")
+                        
+                        # Calculate time difference
+                        time_diff = leave_dt - now_dt
+                        diff_minutes = time_diff.total_seconds() / 60
+                        
+                        if diff_minutes < 60:
+                            flash('Same-day teacher leave must be applied at least 1 hour before the leave starts! In case of any emergency, please contact the Administrator.', 'danger')
+                            return redirect(request.referrer)
+                    except ValueError:
+                        flash('Invalid time format! Please use HH:MM (24-hour format)', 'warning')
+                        return redirect(request.referrer)
         except Exception as e:
             flash(f'Error parsing dates: {e}', 'warning')
             return redirect(request.referrer)
@@ -370,6 +452,7 @@ def apply_leave():
             role=session['role'], 
             reason=reason, 
             dates=dates, 
+            start_time=start_time_val,
             document_path=filename
         )
         db.session.add(new_leave)
@@ -384,6 +467,16 @@ def apply_leave():
             'reason': reason,
             'status': new_leave.status
         }, to='admin_room')
+        
+        # Real-time notification for Mentors
+        if session['role'] == 'Student':
+            student_class = user.department # 'department' field stores the class (e.g., IIBCA)
+            socketio.emit('new_student_leave', {
+                'id': new_leave.id,
+                'student_name': session['name'],
+                'student_class': student_class,
+                'dates': dates
+            }, to=f"mentor_{student_class}")
         
         flash('Leave request submitted!', 'success')
         return redirect(url_for('dashboard'))
@@ -428,13 +521,15 @@ def update_leave(leave_id, status):
         
     flash(f'Leave updated to {status} successfully!', 'info')
     
-    # Real-time notification for User
-    socketio.emit('leave_status_changed', {
+    # Real-time notification for User and Admin
+    update_data = {
         'id': leave_id,
         'status': status,
         'remark': leave.remark,
-        'message': f"Your leave request has been {status}."
-    }, to=f"user_{leave.user_id}")
+        'message': f"Leave request for {leave.user.name} has been {status}."
+    }
+    socketio.emit('leave_status_changed', update_data, to=f"user_{leave.user_id}")
+    socketio.emit('leave_status_changed', update_data, to='admin_room')
     
     return redirect(request.referrer)
 
@@ -447,9 +542,12 @@ def get_class_subject_mapping():
     return {}
 
 def get_class_from_subject(subject_name):
+    if not subject_name: return None
     mapping = get_class_subject_mapping()
+    search_sub = subject_name.strip().lower()
     for class_name, subjects in mapping.items():
-        if subject_name in subjects:
+        # Check case-insensitively
+        if any(search_sub == s.strip().lower() for s in subjects):
             return class_name
     return None
 
@@ -474,36 +572,172 @@ def teacher_timetable():
     for subjects in mapping.values():
         all_subjects.extend(subjects)
     all_subjects = sorted(list(set(all_subjects)))
+
+    # Identify the teacher's mentored class
+    mentor_class = None
+    mentors_path = os.path.join(app.root_path, 'mentors_data.json')
+    if os.path.exists(mentors_path):
+        with open(mentors_path, 'r') as f:
+            mentors_data = json.load(f)
+        teacher_name = (session.get('name') or "").strip().lower()
+        for mentor_info in mentors_data:
+            if (mentor_info.get('mentor1') or "").strip().lower() == teacher_name or \
+               (mentor_info.get('mentor2') or "").strip().lower() == teacher_name:
+                mentor_class = mentor_info['class_name']
+                break
     
     return render_template('teacher/timetable.html', 
                            timetable_data=timetable_data, 
                            days=days, 
                            periods=periods,
                            all_subjects=all_subjects,
-                           class_mapping=mapping)
+                           class_mapping=mapping,
+                           mentor_class=mentor_class)
+
+@app.route('/admin/subjects', methods=['GET', 'POST'])
+def manage_subjects():
+    if session.get('role') != 'Admin': return redirect(url_for('login'))
+    
+    mapping = get_class_subject_mapping()
+    
+    if request.method == 'POST':
+        class_name = request.form.get('class_name')
+        new_class_name = request.form.get('new_class_name', '').strip()
+        new_subject = request.form.get('subject').strip()
+        
+        # Use existing class if selected, otherwise use new class name
+        final_class = class_name if class_name else new_class_name
+        
+        if final_class and new_subject:
+            if final_class not in mapping:
+                mapping[final_class] = []
+            
+            if new_subject not in mapping[final_class]:
+                mapping[final_class].append(new_subject)
+                
+                # Save back to JSON
+                json_path = os.path.join(app.root_path, 'class_subjects.json')
+                with open(json_path, 'w') as f:
+                    json.dump(mapping, f, indent=2)
+                
+                flash(f'Subject "{new_subject}" added to {final_class}!', 'success')
+            else:
+                flash('Subject already exists for this class.', 'warning')
+        else:
+            flash('Please provide both Class Name and Subject.', 'danger')
+        return redirect(url_for('manage_subjects'))
+        
+    return render_template('admin/subjects.html', mapping=mapping)
+
+@app.route('/api/delete_subject', methods=['POST'])
+def delete_subject():
+    if session.get('role') != 'Admin': return jsonify({'success': False}), 403
+    data = request.json
+    class_name = data.get('class_name')
+    subject = data.get('subject')
+    
+    mapping = get_class_subject_mapping()
+    if class_name in mapping and subject in mapping[class_name]:
+        mapping[class_name].remove(subject)
+        json_path = os.path.join(app.root_path, 'class_subjects.json')
+        with open(json_path, 'w') as f:
+            json.dump(mapping, f, indent=2)
+        return jsonify({'success': True})
+    return jsonify({'success': False}), 400
 
 @app.route('/api/save_timetable', methods=['POST'])
 def save_timetable():
     if session.get('role') != 'Teacher': return jsonify({'success': False, 'message': 'Unauthorized'}), 403
     
     data = request.json
+    print(f"DEBUG: Received save_timetable request: {data}")
     teacher_id = session.get('user_id')
     day = data.get('day')
-    period = data.get('period')
+    try:
+        period = int(data.get('period'))
+    except (TypeError, ValueError):
+        return jsonify({'success': False, 'message': 'Invalid period data'}), 400
     subject = data.get('subject')
     
     if not day or not period:
         return jsonify({'success': False, 'message': 'Missing data'}), 400
 
-    # Determine class for the subject
-    class_name = get_class_from_subject(subject) if subject else None
+    # 1. Determine Target Class
+    mapping = get_class_subject_mapping()
+    target_class = data.get('class_name') # Explicit selection from user
+    official_subject = subject
     
-    # VALIDATION 1: Check if class already has a subject at this time (from another teacher)
     if subject:
-        if not class_name:
-            return jsonify({'success': False, 'message': f'Subject "{subject}" not mapped to any class.'}), 400
+        search_sub = subject.strip().lower()
+        
+        # 2. Identify the teacher's mentored class
+        user_mentored_class = None
+        mentors_path = os.path.join(app.root_path, 'mentors_data.json')
+        if os.path.exists(mentors_path):
+            with open(mentors_path, 'r') as f:
+                mentors_data = json.load(f)
+            teacher_name = (session.get('name') or "").strip().lower()
+            for mentor_info in mentors_data:
+                m1 = (mentor_info.get('mentor1') or "").strip().lower()
+                m2 = (mentor_info.get('mentor2') or "").strip().lower()
+                if m1 == teacher_name or m2 == teacher_name:
+                    user_mentored_class = mentor_info['class_name']
+                    break
+
+        # 3. Determine Target Class
+        if not target_class:
+            # Check mentored class FIRST to prevent ambiguity
+            if user_mentored_class and user_mentored_class in mapping:
+                for s in mapping[user_mentored_class]:
+                    if search_sub == s.strip().lower():
+                        target_class = user_mentored_class
+                        official_subject = s
+                        break
             
-        # Find all subjects mapped to this class
+            # If not in mentored class, search ALL classes
+            if not target_class:
+                for c_name, subjects in mapping.items():
+                    for s in subjects:
+                        if search_sub == s.strip().lower():
+                            target_class = c_name
+                            official_subject = s
+                            break
+                    if target_class: break
+        
+        # 4. Final Fallback: First class in their department, or first class in list, or "General"
+        if not target_class:
+            user_dept = session.get('department')
+            if user_dept:
+                for c_name in mapping.keys():
+                    if user_dept.lower() in c_name.lower():
+                        target_class = c_name
+                        break
+        
+        if not target_class:
+            target_class = list(mapping.keys())[0] if mapping.keys() else "General"
+            
+        print(f"Final determined class for {subject}: {target_class}")
+        
+        # 5. Auto-add to curriculum if it's missing from target class
+        if target_class not in mapping: mapping[target_class] = []
+        if not any(s.strip().lower() == search_sub for s in mapping[target_class]):
+            mapping[target_class].append(subject)
+            json_path = os.path.join(app.root_path, 'class_subjects.json')
+            with open(json_path, 'w') as f:
+                json.dump(mapping, f, indent=2)
+            official_subject = subject
+            print(f"Auto-added {subject} to class {target_class}")
+        else:
+            # If it IS there, find the official casing
+            for s in mapping[target_class]:
+                if s.strip().lower() == search_sub:
+                    official_subject = s
+                    break
+
+        # Now we have final class_name and official_subject
+        class_name = target_class
+            
+        # Update search subjects to use official names for database query
         mapping = get_class_subject_mapping()
         class_subjects = mapping.get(class_name, [])
         
@@ -515,21 +749,16 @@ def save_timetable():
         ).first()
         
         if existing_class_record:
-            return jsonify({'success': False, 'message': f'Class {class_name} already has {existing_class_record.subject} at this time (Teacher: {existing_class_record.teacher.name})'}), 400
+            return jsonify({'success': False, 'message': f'Class {class_name} is busy with {existing_class_record.subject} (Teacher: {existing_class_record.teacher.name})'}), 400
 
-    # VALIDATION 2: Prevent teacher having multiple classes at same time 
-    # (Implicitly handled if we only allow one subject per teacher per slot, but let's be explicit)
-    # Actually, in the teacher's own grid, they are just updating their own slot.
-    # But if they try to assign a subject that belongs to a class which is ALREADY busy with another teacher, we caught it above.
-    
     # Find or create record
     record = TeacherTimetable.query.filter_by(teacher_id=teacher_id, day=day, period=period).first()
     
     if subject:
         if record:
-            record.subject = subject
+            record.subject = official_subject
         else:
-            new_record = TeacherTimetable(teacher_id=teacher_id, day=day, period=period, subject=subject)
+            new_record = TeacherTimetable(teacher_id=teacher_id, day=day, period=period, subject=official_subject)
             db.session.add(new_record)
     else:
         # If subject is empty/None, remove the record
