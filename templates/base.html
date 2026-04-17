@@ -243,6 +243,19 @@
             showToast(data.message, data.status === 'Approved' ? 'success' : 'danger');
         });
 
+        globalSocket.on('new_student_leave', (data) => {
+            {% if session.get('role') == 'Teacher' %}
+                showToast(`New leave request from ${data.student_name} (${data.student_class})`, 'info');
+                // Optional: Play a subtle sound
+            {% endif %}
+        });
+
+        globalSocket.on('new_leave_submitted', (data) => {
+            {% if session.get('role') == 'Admin' %}
+                showToast(`New ${data.role} leave request: ${data.name}`, 'info');
+            {% endif %}
+        });
+
         // AI Chat Logic
         function toggleChat() {
             document.getElementById('ai-chat-window').classList.toggle('hidden');
