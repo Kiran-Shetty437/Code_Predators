@@ -44,11 +44,27 @@ def send_approval_email(target_email, name, role, dates):
         msg.body = f"Hello {name},\n\nYour leave request for {dates} as a {role} has been APPROVED.\n\nBest regards,\nCollege Leave Management System"
         
         # Send in a background thread to avoid slowing down the UI
-        thread = threading.Thread(target=lambda: mail.send(msg))
+        thread = threading.Thread(target=send_async_email, args=(msg,))
         thread.start()
         print(f"Approval email sent to {target_email}")
     except Exception as e:
         print(f"Error sending email: {e}")
+
+def send_parent_notification(parent_email, student_name, dates):
+    try:
+        msg = Message(f"Leave Approved: {student_name}",
+                      recipients=[parent_email])
+        msg.body = f"Dear Parent,\n\nThis is to inform you that the leave request applied by your ward, {student_name}, for the dates {dates} has been APPROVED by the college.\n\nBest regards,\nCollege Leave Management System"
+        
+        thread = threading.Thread(target=send_async_email, args=(msg,))
+        thread.start()
+        print(f"Parent notification email sent to {parent_email}")
+    except Exception as e:
+        print(f"Error sending parent email: {e}")
+
+def send_async_email(msg):
+    with app.app_context():
+        mail.send(msg)
 
 def is_absent_today(date_str):
     """
@@ -86,6 +102,7 @@ class User(db.Model):
     phone = db.Column(db.String(20))
     dob = db.Column(db.String(20))
     roll_no = db.Column(db.String(50))
+    parent_email = db.Column(db.String(120))
 
 class LeaveRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -141,7 +158,8 @@ with app.app_context():
                     email=user_data.get('email'),
                     phone=user_data.get('phone'),
                     dob=user_data.get('dob'),
-                    roll_no=user_data.get('roll_no')
+                    roll_no=user_data.get('roll_no'),
+                    parent_email=user_data.get('parent_email')
                 )
                 db.session.add(new_user)
             
@@ -484,8 +502,14 @@ def update_leave(leave_id, status):
     db.session.commit()
     
     # Send Email Notification if Approved
-    if status == 'Approved' and leave.user.email:
-        send_approval_email(leave.user.email, leave.user.name, leave.role, leave.dates)
+    if status == 'Approved':
+        # Notify user (Student or Teacher)
+        if leave.user.email:
+            send_approval_email(leave.user.email, leave.user.name, leave.role, leave.dates)
+        
+        # Notify Parent if Student
+        if leave.role == 'Student' and leave.user.parent_email:
+            send_parent_notification(leave.user.parent_email, leave.user.name, leave.dates)
         
     flash(f'Leave updated to {status} successfully!', 'info')
     

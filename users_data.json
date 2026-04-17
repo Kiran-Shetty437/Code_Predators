@@ -448,7 +448,8 @@
         "email": "geeta.patel@student.college.edu",
         "phone": "9885804384",
         "dob": "2003-10-05",
-        "roll_no": "IBCA01"
+        "roll_no": "IBCA01",
+        "parent_email": "geeta.patel.parent@example.com"
     },
     {
         "name": "Vikram Choudhury",
@@ -459,7 +460,8 @@
         "email": "vikram.choudhury@student.college.edu",
         "phone": "6828846727",
         "dob": "2003-11-12",
-        "roll_no": "IBCA02"
+        "roll_no": "IBCA02",
+        "parent_email": "vikram.choudhury.parent@example.com"
     },
     {
         "name": "Suresh Verma",
@@ -470,7 +472,8 @@
         "email": "suresh.verma@student.college.edu",
         "phone": "7623015697",
         "dob": "2005-04-28",
-        "roll_no": "IBCA03"
+        "roll_no": "IBCA03",
+        "parent_email": "suresh.verma.parent@example.com"
     },
     {
         "name": "Pooja Maurya",
@@ -481,7 +484,8 @@
         "email": "pooja.maurya@student.college.edu",
         "phone": "7864399417",
         "dob": "2004-10-15",
-        "roll_no": "IBCA04"
+        "roll_no": "IBCA04",
+        "parent_email": "pooja.maurya.parent@example.com"
     },
     {
         "name": "Priya Patel",
@@ -492,7 +496,8 @@
         "email": "priya.patel@student.college.edu",
         "phone": "7134664850",
         "dob": "2004-03-26",
-        "roll_no": "IBCA05"
+        "roll_no": "IBCA05",
+        "parent_email": "priya.patel.parent@example.com"
     },
     {
         "name": "Siddharth Das",
@@ -503,7 +508,8 @@
         "email": "siddharth.das@student.college.edu",
         "phone": "8382113465",
         "dob": "2003-08-06",
-        "roll_no": "IBCA06"
+        "roll_no": "IBCA06",
+        "parent_email": "siddharth.das.parent@example.com"
     },
     {
         "name": "Suresh Malhotra",
@@ -514,7 +520,8 @@
         "email": "suresh.malhotra@student.college.edu",
         "phone": "6573156593",
         "dob": "2004-06-07",
-        "roll_no": "IBCA07"
+        "roll_no": "IBCA07",
+        "parent_email": "suresh.malhotra.parent@example.com"
     },
     {
         "name": "Suresh Kapoor",
@@ -525,7 +532,8 @@
         "email": "suresh.kapoor@student.college.edu",
         "phone": "9127987018",
         "dob": "2003-06-18",
-        "roll_no": "IBCA08"
+        "roll_no": "IBCA08",
+        "parent_email": "suresh.kapoor.parent@example.com"
     },
     {
         "name": "Lata Deshmukh",
@@ -536,7 +544,8 @@
         "email": "lata.deshmukh@student.college.edu",
         "phone": "8012449526",
         "dob": "2003-07-12",
-        "roll_no": "IBCA09"
+        "roll_no": "IBCA09",
+        "parent_email": "lata.deshmukh.parent@example.com"
     },
     {
         "name": "Rohan Reddy",
@@ -547,7 +556,8 @@
         "email": "rohan.reddy@student.college.edu",
         "phone": "8799583345",
         "dob": "2003-02-12",
-        "roll_no": "IBCA10"
+        "roll_no": "IBCA10",
+        "parent_email": "rohan.reddy.parent@example.com"
     },
     {
         "name": "Vijay Choudhury",
@@ -558,7 +568,8 @@
         "email": "vijay.choudhury@student.college.edu",
         "phone": "6865592210",
         "dob": "2004-01-11",
-        "roll_no": "IIBCA01"
+        "roll_no": "IIBCA01",
+        "parent_email": "vijay.choudhury.parent@example.com"
     },
     {
         "name": "Vikram Reddy",
@@ -569,7 +580,8 @@
         "email": "vikram.reddy@student.college.edu",
         "phone": "7768155744",
         "dob": "2004-01-10",
-        "roll_no": "IIBCA02"
+        "roll_no": "IIBCA02",
+        "parent_email": "vikram.reddy.parent@example.com"
     },
     {
         "name": "Aditi Singh",
@@ -580,7 +592,8 @@
         "email": "aditi.singh@student.college.edu",
         "phone": "8036154956",
         "dob": "2006-07-01",
-        "roll_no": "IIBCA03"
+        "roll_no": "IIBCA03",
+        "parent_email": "aditi.singh.parent@example.com"
     },
     {
         "name": "Suresh Gupta",
@@ -591,7 +604,8 @@
         "email": "suresh.gupta@student.college.edu",
         "phone": "7313716898",
         "dob": "2004-09-20",
-        "roll_no": "IIBCA04"
+        "roll_no": "IIBCA04",
+        "parent_email": "suresh.gupta.parent@example.com"
     },
     {
         "name": "Suresh Nair",
@@ -602,7 +616,8 @@
         "email": "suresh.nair@student.college.edu",
         "phone": "6731676413",
         "dob": "2005-11-13",
-        "roll_no": "IIBCA05"
+        "roll_no": "IIBCA05",
+        "parent_email": "suresh.nair.parent@example.com"
     },
     {
         "name": "Vijay Deshmukh",
@@ -613,7 +628,8 @@
         "email": "vijay.deshmukh@student.college.edu",
         "phone": "8073094397",
         "dob": "2005-11-21",
-        "roll_no": "IIBCA06"
+        "roll_no": "IIBCA06",
+        "parent_email": "vijay.deshmukh.parent@example.com"
     },
     {
         "name": "Pooja Nair",
@@ -624,7 +640,8 @@
         "email": "pooja.nair@student.college.edu",
         "phone": "8528355126",
         "dob": "2006-03-21",
-        "roll_no": "IIBCA07"
+        "roll_no": "IIBCA07",
+        "parent_email": "pooja.nair.parent@example.com"
     },
     {
         "name": "Geeta Reddy",
@@ -635,7 +652,8 @@
         "email": "geeta.reddy@student.college.edu",
         "phone": "6816213063",
         "dob": "2003-02-16",
-        "roll_no": "IIBCA08"
+        "roll_no": "IIBCA08",
+        "parent_email": "geeta.reddy.parent@example.com"
     },
     {
         "name": "Ananya Maurya",
@@ -646,7 +664,8 @@
         "email": "ananya.maurya@student.college.edu",
         "phone": "6251414728",
         "dob": "2003-10-12",
-        "roll_no": "IIBCA09"
+        "roll_no": "IIBCA09",
+        "parent_email": "ananya.maurya.parent@example.com"
     },
     {
         "name": "Aditi Deshmukh",
@@ -657,7 +676,8 @@
         "email": "aditi.deshmukh@student.college.edu",
         "phone": "8616592041",
         "dob": "2005-08-26",
-        "roll_no": "IIBCA10"
+        "roll_no": "IIBCA10",
+        "parent_email": "aditi.deshmukh.parent@example.com"
     },
     {
         "name": "Sunita Kulkarni",
@@ -668,7 +688,8 @@
         "email": "sunita.kulkarni@student.college.edu",
         "phone": "8186265289",
         "dob": "2006-03-10",
-        "roll_no": "IIIBCA01"
+        "roll_no": "IIIBCA01",
+        "parent_email": "sunita.kulkarni.parent@example.com"
     },
     {
         "name": "Manish Patel",
@@ -679,7 +700,8 @@
         "email": "manish.patel@student.college.edu",
         "phone": "9371779540",
         "dob": "2003-11-04",
-        "roll_no": "IIIBCA02"
+        "roll_no": "IIIBCA02",
+        "parent_email": "manish.patel.parent@example.com"
     },
     {
         "name": "Karan Gupta",
@@ -690,7 +712,8 @@
         "email": "karan.gupta@student.college.edu",
         "phone": "6461428840",
         "dob": "2004-03-08",
-        "roll_no": "IIIBCA03"
+        "roll_no": "IIIBCA03",
+        "parent_email": "karan.gupta.parent@example.com"
     },
     {
         "name": "Vijay Nair",
@@ -701,7 +724,8 @@
         "email": "vijay.nair@student.college.edu",
         "phone": "9886370909",
         "dob": "2004-09-06",
-        "roll_no": "IIIBCA04"
+        "roll_no": "IIIBCA04",
+        "parent_email": "vijay.nair.parent@example.com"
     },
     {
         "name": "Neha Malhotra",
@@ -712,7 +736,8 @@
         "email": "neha.malhotra@student.college.edu",
         "phone": "7174812461",
         "dob": "2005-08-20",
-        "roll_no": "IIIBCA05"
+        "roll_no": "IIIBCA05",
+        "parent_email": "neha.malhotra.parent@example.com"
     },
     {
         "name": "Sanya Gupta",
@@ -723,7 +748,8 @@
         "email": "sanya.gupta@student.college.edu",
         "phone": "8672699136",
         "dob": "2003-10-19",
-        "roll_no": "IIIBCA06"
+        "roll_no": "IIIBCA06",
+        "parent_email": "sanya.gupta.parent@example.com"
     },
     {
         "name": "Siddharth Choudhury",
@@ -734,7 +760,8 @@
         "email": "siddharth.choudhury@student.college.edu",
         "phone": "8263577843",
         "dob": "2006-06-06",
-        "roll_no": "IIIBCA07"
+        "roll_no": "IIIBCA07",
+        "parent_email": "siddharth.choudhury.parent@example.com"
     },
     {
         "name": "Priya Yadav",
@@ -745,7 +772,8 @@
         "email": "priya.yadav@student.college.edu",
         "phone": "9254008425",
         "dob": "2004-04-07",
-        "roll_no": "IIIBCA08"
+        "roll_no": "IIIBCA08",
+        "parent_email": "priya.yadav.parent@example.com"
     },
     {
         "name": "Sneha Singh",
@@ -756,7 +784,8 @@
         "email": "sneha.singh@student.college.edu",
         "phone": "7832449744",
         "dob": "2005-04-23",
-        "roll_no": "IIIBCA09"
+        "roll_no": "IIIBCA09",
+        "parent_email": "sneha.singh.parent@example.com"
     },
     {
         "name": "Meera Malhotra",
@@ -767,7 +796,8 @@
         "email": "meera.malhotra@student.college.edu",
         "phone": "9903011834",
         "dob": "2006-12-07",
-        "roll_no": "IIIBCA10"
+        "roll_no": "IIIBCA10",
+        "parent_email": "meera.malhotra.parent@example.com"
     },
     {
         "name": "Sanya Maurya",
@@ -778,7 +808,8 @@
         "email": "sanya.maurya@student.college.edu",
         "phone": "6851076722",
         "dob": "2004-03-18",
-        "roll_no": "IBBA01"
+        "roll_no": "IBBA01",
+        "parent_email": "sanya.maurya.parent@example.com"
     },
     {
         "name": "Aditi Nair",
@@ -789,7 +820,8 @@
         "email": "aditi.nair@student.college.edu",
         "phone": "7567217307",
         "dob": "2004-09-28",
-        "roll_no": "IBBA02"
+        "roll_no": "IBBA02",
+        "parent_email": "aditi.nair.parent@example.com"
     },
     {
         "name": "Varun Gupta",
@@ -800,7 +832,8 @@
         "email": "varun.gupta@student.college.edu",
         "phone": "8149101528",
         "dob": "2006-05-04",
-        "roll_no": "IBBA03"
+        "roll_no": "IBBA03",
+        "parent_email": "varun.gupta.parent@example.com"
     },
     {
         "name": "Suresh Das",
@@ -811,7 +844,8 @@
         "email": "suresh.das@student.college.edu",
         "phone": "6498094428",
         "dob": "2006-05-10",
-        "roll_no": "IBBA04"
+        "roll_no": "IBBA04",
+        "parent_email": "suresh.das.parent@example.com"
     },
     {
         "name": "Anita Yadav",
@@ -822,7 +856,8 @@
         "email": "anita.yadav@student.college.edu",
         "phone": "9469675138",
         "dob": "2006-12-10",
-        "roll_no": "IBBA05"
+        "roll_no": "IBBA05",
+        "parent_email": "anita.yadav.parent@example.com"
     },
     {
         "name": "Anita Yadav",
@@ -833,7 +868,8 @@
         "email": "anita.yadav@student.college.edu",
         "phone": "7739473531",
         "dob": "2004-09-03",
-        "roll_no": "IBBA06"
+        "roll_no": "IBBA06",
+        "parent_email": "anita.yadav.parent@example.com"
     },
     {
         "name": "Ananya Gupta",
@@ -844,7 +880,8 @@
         "email": "ananya.gupta@student.college.edu",
         "phone": "8842286276",
         "dob": "2004-12-22",
-        "roll_no": "IBBA07"
+        "roll_no": "IBBA07",
+        "parent_email": "ananya.gupta.parent@example.com"
     },
     {
         "name": "Priya Iyer",
@@ -855,7 +892,8 @@
         "email": "priya.iyer@student.college.edu",
         "phone": "6207386638",
         "dob": "2003-08-16",
-        "roll_no": "IBBA08"
+        "roll_no": "IBBA08",
+        "parent_email": "priya.iyer.parent@example.com"
     },
     {
         "name": "Akash Gupta",
@@ -866,7 +904,8 @@
         "email": "akash.gupta@student.college.edu",
         "phone": "7234783985",
         "dob": "2004-09-03",
-        "roll_no": "IBBA09"
+        "roll_no": "IBBA09",
+        "parent_email": "akash.gupta.parent@example.com"
     },
     {
         "name": "Rahul Das",
@@ -877,7 +916,8 @@
         "email": "rahul.das@student.college.edu",
         "phone": "8029162013",
         "dob": "2005-02-05",
-        "roll_no": "IBBA10"
+        "roll_no": "IBBA10",
+        "parent_email": "rahul.das.parent@example.com"
     },
     {
         "name": "Vikram Chawla",
@@ -888,7 +928,8 @@
         "email": "vikram.chawla@student.college.edu",
         "phone": "6415965308",
         "dob": "2004-02-14",
-        "roll_no": "IIBBA01"
+        "roll_no": "IIBBA01",
+        "parent_email": "vikram.chawla.parent@example.com"
     },
     {
         "name": "Manish Sharma",
@@ -899,7 +940,8 @@
         "email": "manish.sharma@student.college.edu",
         "phone": "9103953141",
         "dob": "2005-02-04",
-        "roll_no": "IIBBA02"
+        "roll_no": "IIBBA02",
+        "parent_email": "manish.sharma.parent@example.com"
     },
     {
         "name": "Geeta Kulkarni",
@@ -910,7 +952,8 @@
         "email": "geeta.kulkarni@student.college.edu",
         "phone": "8296028330",
         "dob": "2006-01-02",
-        "roll_no": "IIBBA03"
+        "roll_no": "IIBBA03",
+        "parent_email": "geeta.kulkarni.parent@example.com"
     },
     {
         "name": "Ishaan Singh",
@@ -921,7 +964,8 @@
         "email": "ishaan.singh@student.college.edu",
         "phone": "8947487159",
         "dob": "2003-01-23",
-        "roll_no": "IIBBA04"
+        "roll_no": "IIBBA04",
+        "parent_email": "ishaan.singh.parent@example.com"
     },
     {
         "name": "Varun Iyer",
@@ -932,7 +976,8 @@
         "email": "varun.iyer@student.college.edu",
         "phone": "8365875960",
         "dob": "2003-03-13",
-        "roll_no": "IIBBA05"
+        "roll_no": "IIBBA05",
+        "parent_email": "varun.iyer.parent@example.com"
     },
     {
         "name": "Suresh Singh",
@@ -943,7 +988,8 @@
         "email": "suresh.singh@student.college.edu",
         "phone": "8154294014",
         "dob": "2005-03-27",
-        "roll_no": "IIBBA06"
+        "roll_no": "IIBBA06",
+        "parent_email": "suresh.singh.parent@example.com"
     },
     {
         "name": "Riya Yadav",
@@ -954,7 +1000,8 @@
         "email": "riya.yadav@student.college.edu",
         "phone": "9438110046",
         "dob": "2003-12-17",
-        "roll_no": "IIBBA07"
+        "roll_no": "IIBBA07",
+        "parent_email": "riya.yadav.parent@example.com"
     },
     {
         "name": "Sanya Nair",
@@ -965,7 +1012,8 @@
         "email": "sanya.nair@student.college.edu",
         "phone": "6735181347",
         "dob": "2005-08-25",
-        "roll_no": "IIBBA08"
+        "roll_no": "IIBBA08",
+        "parent_email": "sanya.nair.parent@example.com"
     },
     {
         "name": "Neha Kapoor",
@@ -976,7 +1024,8 @@
         "email": "neha.kapoor@student.college.edu",
         "phone": "7822323967",
         "dob": "2005-03-23",
-        "roll_no": "IIBBA09"
+        "roll_no": "IIBBA09",
+        "parent_email": "neha.kapoor.parent@example.com"
     },
     {
         "name": "Neha Patel",
@@ -987,7 +1036,8 @@
         "email": "neha.patel@student.college.edu",
         "phone": "6642787657",
         "dob": "2003-11-07",
-        "roll_no": "IIBBA10"
+        "roll_no": "IIBBA10",
+        "parent_email": "neha.patel.parent@example.com"
     },
     {
         "name": "Siddharth Das",
@@ -998,7 +1048,8 @@
         "email": "siddharth.das@student.college.edu",
         "phone": "7053336834",
         "dob": "2003-10-13",
-        "roll_no": "IIIBBA01"
+        "roll_no": "IIIBBA01",
+        "parent_email": "siddharth.das.parent@example.com"
     },
     {
         "name": "Geeta Kapoor",
@@ -1009,7 +1060,8 @@
         "email": "geeta.kapoor@student.college.edu",
         "phone": "9573850008",
         "dob": "2006-07-03",
-        "roll_no": "IIIBBA02"
+        "roll_no": "IIIBBA02",
+        "parent_email": "geeta.kapoor.parent@example.com"
     },
     {
         "name": "Varun Kapoor",
@@ -1020,7 +1072,8 @@
         "email": "varun.kapoor@student.college.edu",
         "phone": "9726494689",
         "dob": "2003-03-25",
-        "roll_no": "IIIBBA03"
+        "roll_no": "IIIBBA03",
+        "parent_email": "varun.kapoor.parent@example.com"
     },
     {
         "name": "Rahul Bose",
@@ -1031,7 +1084,8 @@
         "email": "rahul.bose@student.college.edu",
         "phone": "9628911492",
         "dob": "2005-11-02",
-        "roll_no": "IIIBBA04"
+        "roll_no": "IIIBBA04",
+        "parent_email": "rahul.bose.parent@example.com"
     },
     {
         "name": "Sunita Yadav",
@@ -1042,7 +1096,8 @@
         "email": "sunita.yadav@student.college.edu",
         "phone": "7193183798",
         "dob": "2004-06-15",
-        "roll_no": "IIIBBA05"
+        "roll_no": "IIIBBA05",
+        "parent_email": "sunita.yadav.parent@example.com"
     },
     {
         "name": "Ishaan Yadav",
@@ -1053,7 +1108,8 @@
         "email": "ishaan.yadav@student.college.edu",
         "phone": "8894599958",
         "dob": "2003-07-08",
-        "roll_no": "IIIBBA06"
+        "roll_no": "IIIBBA06",
+        "parent_email": "ishaan.yadav.parent@example.com"
     },
     {
         "name": "Rahul Kapoor",
@@ -1064,7 +1120,8 @@
         "email": "rahul.kapoor@student.college.edu",
         "phone": "9286343747",
         "dob": "2006-02-09",
-        "roll_no": "IIIBBA07"
+        "roll_no": "IIIBBA07",
+        "parent_email": "rahul.kapoor.parent@example.com"
     },
     {
         "name": "Sneha Bose",
@@ -1075,7 +1132,8 @@
         "email": "sneha.bose@student.college.edu",
         "phone": "6332161257",
         "dob": "2006-12-23",
-        "roll_no": "IIIBBA08"
+        "roll_no": "IIIBBA08",
+        "parent_email": "sneha.bose.parent@example.com"
     },
     {
         "name": "Ramesh Iyer",
@@ -1086,7 +1144,8 @@
         "email": "ramesh.iyer@student.college.edu",
         "phone": "7892197597",
         "dob": "2004-05-26",
-        "roll_no": "IIIBBA09"
+        "roll_no": "IIIBBA09",
+        "parent_email": "ramesh.iyer.parent@example.com"
     },
     {
         "name": "Pooja Prasad",
@@ -1097,7 +1156,8 @@
         "email": "pooja.prasad@student.college.edu",
         "phone": "8965189474",
         "dob": "2006-06-02",
-        "roll_no": "IIIBBA10"
+        "roll_no": "IIIBBA10",
+        "parent_email": "pooja.prasad.parent@example.com"
     },
     {
         "name": "Karan Nair",
@@ -1108,7 +1168,8 @@
         "email": "karan.nair@student.college.edu",
         "phone": "7628282028",
         "dob": "2006-09-18",
-        "roll_no": "IBCOM01"
+        "roll_no": "IBCOM01",
+        "parent_email": "karan.nair.parent@example.com"
     },
     {
         "name": "Sunita Bose",
@@ -1119,7 +1180,8 @@
         "email": "sunita.bose@student.college.edu",
         "phone": "9118502522",
         "dob": "2004-01-11",
-        "roll_no": "IBCOM02"
+        "roll_no": "IBCOM02",
+        "parent_email": "sunita.bose.parent@example.com"
     },
     {
         "name": "Aditi Deshmukh",
@@ -1130,7 +1192,8 @@
         "email": "aditi.deshmukh@student.college.edu",
         "phone": "6843553086",
         "dob": "2005-04-04",
-        "roll_no": "IBCOM03"
+        "roll_no": "IBCOM03",
+        "parent_email": "aditi.deshmukh.parent@example.com"
     },
     {
         "name": "Sneha Iyer",
@@ -1141,7 +1204,8 @@
         "email": "sneha.iyer@student.college.edu",
         "phone": "7501293646",
         "dob": "2006-02-16",
-        "roll_no": "IBCOM04"
+        "roll_no": "IBCOM04",
+        "parent_email": "sneha.iyer.parent@example.com"
     },
     {
         "name": "Ananya Das",
@@ -1152,7 +1216,8 @@
         "email": "ananya.das@student.college.edu",
         "phone": "7033507791",
         "dob": "2003-02-23",
-        "roll_no": "IBCOM05"
+        "roll_no": "IBCOM05",
+        "parent_email": "ananya.das.parent@example.com"
     },
     {
         "name": "Rajesh Gupta",
@@ -1163,7 +1228,8 @@
         "email": "rajesh.gupta@student.college.edu",
         "phone": "9176796664",
         "dob": "2006-03-15",
-        "roll_no": "IBCOM06"
+        "roll_no": "IBCOM06",
+        "parent_email": "rajesh.gupta.parent@example.com"
     },
     {
         "name": "Kavya Deshmukh",
@@ -1174,7 +1240,8 @@
         "email": "kavya.deshmukh@student.college.edu",
         "phone": "9873514390",
         "dob": "2005-04-20",
-        "roll_no": "IBCOM07"
+        "roll_no": "IBCOM07",
+        "parent_email": "kavya.deshmukh.parent@example.com"
     },
     {
         "name": "Neha Kapoor",
@@ -1185,7 +1252,8 @@
         "email": "neha.kapoor@student.college.edu",
         "phone": "7939922634",
         "dob": "2005-12-03",
-        "roll_no": "IBCOM08"
+        "roll_no": "IBCOM08",
+        "parent_email": "neha.kapoor.parent@example.com"
     },
     {
         "name": "Akash Patel",
@@ -1196,7 +1264,8 @@
         "email": "akash.patel@student.college.edu",
         "phone": "8945533543",
         "dob": "2005-11-15",
-        "roll_no": "IBCOM09"
+        "roll_no": "IBCOM09",
+        "parent_email": "akash.patel.parent@example.com"
     },
     {
         "name": "Sunita Joshi",
@@ -1207,7 +1276,8 @@
         "email": "sunita.joshi@student.college.edu",
         "phone": "9006234541",
         "dob": "2006-11-19",
-        "roll_no": "IBCOM10"
+        "roll_no": "IBCOM10",
+        "parent_email": "sunita.joshi.parent@example.com"
     },
     {
         "name": "Varun Choudhury",
@@ -1218,7 +1288,8 @@
         "email": "varun.choudhury@student.college.edu",
         "phone": "8398262359",
         "dob": "2003-08-13",
-        "roll_no": "IIBCOM01"
+        "roll_no": "IIBCOM01",
+        "parent_email": "varun.choudhury.parent@example.com"
     },
     {
         "name": "Akash Choudhury",
@@ -1229,7 +1300,8 @@
         "email": "akash.choudhury@student.college.edu",
         "phone": "6838662943",
         "dob": "2005-10-06",
-        "roll_no": "IIBCOM02"
+        "roll_no": "IIBCOM02",
+        "parent_email": "akash.choudhury.parent@example.com"
     },
     {
         "name": "Vikram Patel",
@@ -1240,7 +1312,8 @@
         "email": "vikram.patel@student.college.edu",
         "phone": "9066758345",
         "dob": "2005-09-12",
-        "roll_no": "IIBCOM03"
+        "roll_no": "IIBCOM03",
+        "parent_email": "vikram.patel.parent@example.com"
     },
     {
         "name": "Lata Prasad",
@@ -1251,7 +1324,8 @@
         "email": "lata.prasad@student.college.edu",
         "phone": "7256243349",
         "dob": "2004-09-25",
-        "roll_no": "IIBCOM04"
+        "roll_no": "IIBCOM04",
+        "parent_email": "lata.prasad.parent@example.com"
     },
     {
         "name": "Ramesh Iyer",
@@ -1262,7 +1336,8 @@
         "email": "ramesh.iyer@student.college.edu",
         "phone": "6364684083",
         "dob": "2004-02-06",
-        "roll_no": "IIBCOM05"
+        "roll_no": "IIBCOM05",
+        "parent_email": "ramesh.iyer.parent@example.com"
     },
     {
         "name": "Ishaan Kapoor",
@@ -1273,7 +1348,8 @@
         "email": "ishaan.kapoor@student.college.edu",
         "phone": "9539857477",
         "dob": "2005-06-28",
-        "roll_no": "IIBCOM06"
+        "roll_no": "IIBCOM06",
+        "parent_email": "ishaan.kapoor.parent@example.com"
     },
     {
         "name": "Riya Kulkarni",
@@ -1284,7 +1360,8 @@
         "email": "riya.kulkarni@student.college.edu",
         "phone": "7153850415",
         "dob": "2006-10-18",
-        "roll_no": "IIBCOM07"
+        "roll_no": "IIBCOM07",
+        "parent_email": "riya.kulkarni.parent@example.com"
     },
     {
         "name": "Aditi Joshi",
@@ -1295,7 +1372,8 @@
         "email": "aditi.joshi@student.college.edu",
         "phone": "6515158119",
         "dob": "2004-04-08",
-        "roll_no": "IIBCOM08"
+        "roll_no": "IIBCOM08",
+        "parent_email": "aditi.joshi.parent@example.com"
     },
     {
         "name": "Meera Yadav",
@@ -1306,7 +1384,8 @@
         "email": "meera.yadav@student.college.edu",
         "phone": "6997799371",
         "dob": "2004-03-07",
-        "roll_no": "IIBCOM09"
+        "roll_no": "IIBCOM09",
+        "parent_email": "meera.yadav.parent@example.com"
     },
     {
         "name": "Neha Bose",
@@ -1317,7 +1396,8 @@
         "email": "neha.bose@student.college.edu",
         "phone": "8301317831",
         "dob": "2004-01-28",
-        "roll_no": "IIBCOM10"
+        "roll_no": "IIBCOM10",
+        "parent_email": "neha.bose.parent@example.com"
     },
     {
         "name": "Aditi Deshmukh",
@@ -1328,7 +1408,8 @@
         "email": "aditi.deshmukh@student.college.edu",
         "phone": "8297636449",
         "dob": "2004-05-15",
-        "roll_no": "IIIBCOM01"
+        "roll_no": "IIIBCOM01",
+        "parent_email": "aditi.deshmukh.parent@example.com"
     },
     {
         "name": "Vijay Chawla",
@@ -1339,7 +1420,8 @@
         "email": "vijay.chawla@student.college.edu",
         "phone": "9628361709",
         "dob": "2004-09-11",
-        "roll_no": "IIIBCOM02"
+        "roll_no": "IIIBCOM02",
+        "parent_email": "vijay.chawla.parent@example.com"
     },
     {
         "name": "Riya Kulkarni",
@@ -1350,7 +1432,8 @@
         "email": "riya.kulkarni@student.college.edu",
         "phone": "7497128944",
         "dob": "2005-07-13",
-        "roll_no": "IIIBCOM03"
+        "roll_no": "IIIBCOM03",
+        "parent_email": "riya.kulkarni.parent@example.com"
     },
     {
         "name": "Arjun Nair",
@@ -1361,7 +1444,8 @@
         "email": "arjun.nair@student.college.edu",
         "phone": "7775409242",
         "dob": "2003-11-14",
-        "roll_no": "IIIBCOM04"
+        "roll_no": "IIIBCOM04",
+        "parent_email": "arjun.nair.parent@example.com"
     },
     {
         "name": "Vikram Chawla",
@@ -1372,7 +1456,8 @@
         "email": "vikram.chawla@student.college.edu",
         "phone": "8346379277",
         "dob": "2005-05-24",
-        "roll_no": "IIIBCOM05"
+        "roll_no": "IIIBCOM05",
+        "parent_email": "vikram.chawla.parent@example.com"
     },
     {
         "name": "Riya Deshmukh",
@@ -1383,7 +1468,8 @@
         "email": "riya.deshmukh@student.college.edu",
         "phone": "6845450459",
         "dob": "2004-02-17",
-        "roll_no": "IIIBCOM06"
+        "roll_no": "IIIBCOM06",
+        "parent_email": "riya.deshmukh.parent@example.com"
     },
     {
         "name": "Aditi Malhotra",
@@ -1394,7 +1480,8 @@
         "email": "aditi.malhotra@student.college.edu",
         "phone": "8076594483",
         "dob": "2004-04-02",
-        "roll_no": "IIIBCOM07"
+        "roll_no": "IIIBCOM07",
+        "parent_email": "aditi.malhotra.parent@example.com"
     },
     {
         "name": "Akash Kulkarni",
@@ -1405,7 +1492,8 @@
         "email": "akash.kulkarni@student.college.edu",
         "phone": "7184510994",
         "dob": "2006-07-19",
-        "roll_no": "IIIBCOM08"
+        "roll_no": "IIIBCOM08",
+        "parent_email": "akash.kulkarni.parent@example.com"
     },
     {
         "name": "Geeta Patel",
@@ -1416,7 +1504,8 @@
         "email": "geeta.patel@student.college.edu",
         "phone": "6562727839",
         "dob": "2006-12-20",
-        "roll_no": "IIIBCOM09"
+        "roll_no": "IIIBCOM09",
+        "parent_email": "geeta.patel.parent@example.com"
     },
     {
         "name": "Tanvi Prasad",
@@ -1427,6 +1516,7 @@
         "email": "tanvi.prasad@student.college.edu",
         "phone": "7973534352",
         "dob": "2004-05-12",
-        "roll_no": "IIIBCOM10"
+        "roll_no": "IIIBCOM10",
+        "parent_email": "tanvi.prasad.parent@example.com"
     }
 ]
